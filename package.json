@@ -1,0 +1,11 @@
+{
+  "name": "ciconia",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "request": "^2.74.0"
+  },
+  "author": "",
+  "license": "ISC"
+}
