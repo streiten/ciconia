@@ -1,12 +1,21 @@
 var fs = require('fs');
-var movebank = require('./libs/movebank');
-
+//var animal = require('./libs/animal.js');
 APPconfig = JSON.parse(fs.readFileSync('./config.json', 'utf8'));
 
-var mb = new movebank();
-mb.getTestData();
+var movebank = require('./libs/movebank.js');
 
-console.log(APPconfig.animals[0].name);
+var mb = new movebank();
+mb.getStudies();
+
+setTimeout(test, 5000);
+
+function test(){
+  for (var i = 0; i < mb.studies.length; i++) {
+    console.log(mb.studies[i].id + ' - ' + mb.studies[i].name);
+  }
+  console.log('Count:' +  mb.studies.length)
+}
+//console.log(APPconfig.animals[0].name);
 
 // getJSON(jsonUrl + "?callback=?", {
 //     study_id: study_id,

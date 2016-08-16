@@ -1,8 +1,6 @@
 var movebank = require('./libs/movebank');
 var mb = new movebank();
 
-mb.getTestData();
-
 module.exports = Animal; 
 
 function Animal(data){
@@ -32,7 +30,8 @@ Animal.prototype.getLocation = function(lat,long) {
 } 
 
 Animal.prototype.getWeather = function (lat,long,timestamp) {
-
+  // https://www.wunderground.com/weather/api/d/docs
+  
 }
 
 Animal.prototype.getPOIs = function (lat,long,timestamp) {
