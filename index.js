@@ -8,23 +8,23 @@ var winston = require('winston');
 var http = require('http').Server(app);
 
 
-/**
- * The Webserving
- */
+// /**
+//  * The Webserving
+//  */
 
-var httpport = 8080;
+// var httpport = 8080;
 
-app.use(express.static('public'));
-app.get('/',requestHandlerHome);
+// app.use(express.static('public'));
+// app.get('/',requestHandlerHome);
 
-function requestHandlerHome(request, response) {
-  response.sendFile( __dirname + '/views/index.html');
-  winston.log('info', 'Serving another request ' + request.hostname + ' to ' + request.ip );
-}
+// function requestHandlerHome(request, response) {
+//   response.sendFile( __dirname + '/views/index.html');
+//   winston.log('info', 'Serving another request ' + request.hostname + ' to ' + request.ip );
+// }
 
-http.listen(httpport, function(){
-  winston.log('info', 'Webserver started... on ' + httpport);
-});
+// http.listen(httpport, function(){
+//   winston.log('info', 'Webserver started... on ' + httpport);
+// });
 
 
 function Ciconia() {
