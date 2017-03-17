@@ -5,9 +5,6 @@ var jsonQuery = require('json-query');
 var sphereKnn = require("sphere-knn");
 var clone = require("clone");
 
-var EventEmitter = require('events').EventEmitter;
-var util = require('util');
-
 module.exports = WHsites;
 
 function WHsites(file){
@@ -39,10 +36,6 @@ WHsites.prototype.nearestSites = function (lat,long,dist,count){
     return result;
 
 };
-
-
-util.inherits(WHsites, EventEmitter);
-
   // XML Structure
   // <row>
   //   <category>Cultural</category>
