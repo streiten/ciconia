@@ -72,8 +72,6 @@ MoveBank.prototype.downloadAllStudies = function() {
 
 MoveBank.prototype.getStudyDetails = function($studyId){
   
-  winston.log('info', 'Getting study details...');
-
   request(this.csvApiBaseURL + '?entity_type=study&study_id=' + $studyId, function (error, response, body) {
   if (!error && response.statusCode == 200) {
     var options = { delimiter : ',' , columns: true };
@@ -93,7 +91,6 @@ MoveBank.prototype.getStudyEvents = function($studyId,$individualID,$count){
     var $count = 10;
   }
 
-  winston.log('info', 'Getting study events...');
   // json-auth endpoint here
   request(this.jsonApiBaseURL + '?study_id='+$studyId+'&individual_ids[]='+$individualID+'&max_events_per_individual='+$count+'&sensor_type=gps', function (error, response, body) {
   if (!error && response.statusCode == 200) {
@@ -106,8 +103,6 @@ MoveBank.prototype.getStudyEvents = function($studyId,$individualID,$count){
 };
 
 MoveBank.prototype.getStudyIndividuals = function($studyId){
-  winston.log('info', 'Getting study individuals...');
-
   request('https://www.movebank.org/movebank/service/direct-read?entity_type=individual&study_id=' + $studyId, function (error, response, body) {
   if (!error && response.statusCode == 200) {
     var options = { delimiter : ',' , columns: true };
