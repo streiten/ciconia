@@ -46,15 +46,17 @@ function Ciconia() {
   //   mb.getStudyDetails(APPconfig.studies[i].studyId);
   // }
 
-  // Study Factory
-  // Animal Factory
+  // Study Factory -> list all animals with latest event ?
+  // Animal Factory -> animals object list
+  
+  // update data from api scheduler (every h) -> send E-Mail
 
   // Get Studies Animals
   for (var i = APPconfig.studies.length - 1; i >= 0; i--) {
     mb.getStudyIndividuals(APPconfig.studies[i].studyId);
   }
 
-  // // Initial 
+  // // Individual Events
   // for (var i = APPconfig.individuals.length - 1; i >= 0; i--) {
   //   mb.getStudyEvents(APPconfig.individuals[i].studyId,APPconfig.individuals[i].individualId,5);
   // }
