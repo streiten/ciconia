@@ -35,34 +35,43 @@ function Ciconia() {
   APPconfig = JSON.parse(fs.readFileSync('./config.json', 'utf8'));
 
   winston.level = 'debug';
-  winston.log('info', 'Cicona started...');
+  winston.log('info', 'Ciconia started...');
 
 
   var mb = new movebank();
   var whs = new WHSites(__dirname + '/data/whc-en.xml');
 
-  mb.getStudyIndividuals(APPconfig.individuals[0].studyId);
+  // Get Studies Details
+  // for (var i = APPconfig.studies.length - 1; i >= 0; i--) {
+  //   mb.getStudyDetails(APPconfig.studies[i].studyId);
+  // }
 
-  // Initial 
-  for (var i = APPconfig.individuals.length - 1; i >= 0; i--) {
-    mb.getStudyEvents(APPconfig.individuals[i].studyId,APPconfig.individuals[i].individualId,1);
+  // Study Factory
+  // Animal Factory
+
+  // Get Studies Animals
+  for (var i = APPconfig.studies.length - 1; i >= 0; i--) {
+    mb.getStudyIndividuals(APPconfig.studies[i].studyId);
   }
+
+  // // Initial 
+  // for (var i = APPconfig.individuals.length - 1; i >= 0; i--) {
+  //   mb.getStudyEvents(APPconfig.individuals[i].studyId,APPconfig.individuals[i].individualId,5);
+  // }
   
-  // Nearest World Heritage Sites
-  var ns = whs.nearestSites(52.5200070,13.4049540,100000,10);
-  for (var i = ns.length - 1; i >= 0; i--) {
-    console.log('WH Site: ' + ns[i].site);
-  }
+  // // Nearest World Heritage Sites
+  // var ns = whs.nearestSites(52.5200070,13.4049540,100000,10);
+  // for (var i = ns.length - 1; i >= 0; i--) {
+  //   console.log('WH Site: ' + ns[i].site);
+  // }
 
-  // Scheduled
-  setInterval(function(){
-    winston.log('info', '===.===');
-    for (var i = APPconfig.individuals.length - 1; i >= 0; i--) {
-      mb.getStudyEvents(APPconfig.individuals[i].studyId,APPconfig.individuals[i].individualId,1);
-    } 
-  },15 * 60 * 1000);
-
-  // mb.getStudyDetails(APPconfig.individuals[0].studyId);
+  // // Scheduled
+  // setInterval(function(){
+  //   winston.log('info', '===.===');
+  //   for (var i = APPconfig.individuals.length - 1; i >= 0; i--) {
+  //     mb.getStudyEvents(APPconfig.individuals[i].studyId,APPconfig.individuals[i].individualId,5);
+  //   } 
+  // },15 * 60 * 1000);
 
 
   mb.on('APIdataReady',dataReadyHandler);
@@ -75,7 +84,7 @@ function Ciconia() {
       case 'studyDetailsReady':
         winston.log('info', 'Studies:');
         for (var i = 0; i <  mb.studies.length; i++) {
-          winston.log('info', 'Name:',mb.studies[i].name,'- id:',mb.studies[i].id);
+          winston.log('info', 'Name:',mb.studies[i].name,'- id:',mb.studies[i].id, ' last update: ', mb.studies[i].timestamp_end);
         }
       break; 
       case 'studyEventsReady':
@@ -88,9 +97,9 @@ function Ciconia() {
             var lat = mb.events.individuals[j].locations[i].location_lat;
 
             winston.log('info','___ ___');
-            winston.log('info', mb.events.individuals[j].individual_local_identifier,'- t:', ts, ' - l:', long,',', lat);
+            winston.log('info', mb.events.individuals[j].individual_local_identifier,'- t:', ts, ' - long:', long,' lat:', lat);
 
-            var nearestSites = whs.nearestSites(long,lat,100000,5);
+            var nearestSites = whs.nearestSites(lat,long,100000,3);
             for (var k = nearestSites.length - 1; k >= 0; k--) {
               winston.log('info','WH site(s) nearby: ' + nearestSites[k].site);
             }
@@ -105,6 +114,7 @@ function Ciconia() {
           winston.log('info',mb.individuals[i].local_identifier,'- id:',mb.individuals[i].id );
         }
         winston.log('info', '=== ===');
+
 
       break;
 

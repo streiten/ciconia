@@ -77,7 +77,9 @@ MoveBank.prototype.getStudyDetails = function($studyId){
     var options = { delimiter : ',' , columns: true };
     parse(body, options, function(err, output){
       if(err) throw err;
+      // pass over data in array instead this.individuals ? messagetype, data
       this.studies = output;
+      console.log(output);
       this.emit('APIdataReady','studyDetailsReady');
     }.bind(this));
   }
@@ -95,6 +97,8 @@ MoveBank.prototype.getStudyEvents = function($studyId,$individualID,$count){
   request(this.jsonApiBaseURL + '?study_id='+$studyId+'&individual_ids[]='+$individualID+'&max_events_per_individual='+$count+'&sensor_type=gps', function (error, response, body) {
   if (!error && response.statusCode == 200) {
       this.events = JSON.parse(body);
+      
+      // pass over data in array instead this.individuals ? messagetype, data
       this.emit('APIdataReady','studyEventsReady');
   } else {
     throw error;
@@ -109,6 +113,7 @@ MoveBank.prototype.getStudyIndividuals = function($studyId){
     parse(body, options, function(err, output){
       if(err) throw err; 
       this.individuals = output;
+      // pass over data in array instead this.individuals ? messagetype, data
       this.emit('APIdataReady','studyIndividualsReady');
     }.bind(this));
   }
