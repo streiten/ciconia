@@ -1,14 +1,28 @@
 var fs = require('fs');
 var winston = require('winston');
 var moment = require('moment');
+var Sequelize = require('sequelize');
 var express = require('express');
 var movebank = require('./libs/movebank.js');
-var WHSites = require('./libs/whsites.js');
+var environment = require('./libs/environmentData.js');
+var animal = require('./libs/animal.js');
+var mysql
 var app = express();
 
 var winston = require('winston');
 var http = require('http').Server(app);
 
+const sequelize = new Sequelize('ciconia', 'root', 'root');
+
+const Animal = sequelize.define('animal', {
+  id: { type: Sequelize.INTEGER, primaryKey: true }, 
+  studyId: Sequelize.INTEGER,
+  name: Sequelize.STRING
+});
+
+Animal.findAll().then(animals => {
+  console.log(animals);
+});
 
 // /**
 //  * The Webserving
@@ -31,41 +45,15 @@ var http = require('http').Server(app);
 
 function Ciconia() {
   
-  //var animal = require('./libs/animal.js');
   APPconfig = JSON.parse(fs.readFileSync('./config.json', 'utf8'));
-
+  
   winston.level = 'debug';
   winston.log('info', 'Ciconia started...');
-
-
-  var mb = new movebank();
-  var whs = new WHSites(__dirname + '/data/whc-en.xml');
-
-  // Get Studies Details
-  // for (var i = APPconfig.studies.length - 1; i >= 0; i--) {
-  //   mb.getStudyDetails(APPconfig.studies[i].studyId);
-  // }
-
-  // Study Factory -> list all animals with latest event ?
-  // Animal Factory -> animals object list
+  
+  //this.animals = [];
+  //this.gatherAnimals();
   
   // update data from api scheduler (every h) -> send E-Mail
-
-  // Get Studies Animals
-  for (var i = APPconfig.studies.length - 1; i >= 0; i--) {
-    mb.getStudyIndividuals(APPconfig.studies[i].studyId);
-  }
-
-  // // Individual Events
-  // for (var i = APPconfig.individuals.length - 1; i >= 0; i--) {
-  //   mb.getStudyEvents(APPconfig.individuals[i].studyId,APPconfig.individuals[i].individualId,5);
-  // }
-  
-  // // Nearest World Heritage Sites
-  // var ns = whs.nearestSites(52.5200070,13.4049540,100000,10);
-  // for (var i = ns.length - 1; i >= 0; i--) {
-  //   console.log('WH Site: ' + ns[i].site);
-  // }
 
   // // Scheduled
   // setInterval(function(){
@@ -75,54 +63,51 @@ function Ciconia() {
   //   } 
   // },15 * 60 * 1000);
 
-
-  mb.on('APIdataReady',dataReadyHandler);
-  function dataReadyHandler(type) {
-    switch(type) {
-      case 'studies':
-        //mb.downloadAllStudies();
-        winston.log('info', 'Event: studies');
-      break; 
-      case 'studyDetailsReady':
-        winston.log('info', 'Studies:');
-        for (var i = 0; i <  mb.studies.length; i++) {
-          winston.log('info', 'Name:',mb.studies[i].name,'- id:',mb.studies[i].id, ' last update: ', mb.studies[i].timestamp_end);
-        }
-      break; 
-      case 'studyEventsReady':
-        for (var j = mb.events.individuals.length - 1; j >= 0; j--) {
-          for (var i = 0; i <  mb.events.individuals[j].locations.length; i++) {
-            
-            var format = "llll";
-            var ts = moment(mb.events.individuals[j].locations[i].timestamp).format(format); 
-            var long = mb.events.individuals[j].locations[i].location_long;
-            var lat = mb.events.individuals[j].locations[i].location_lat;
-
-            winston.log('info','___ ___');
-            winston.log('info', mb.events.individuals[j].individual_local_identifier,'- t:', ts, ' - long:', long,' lat:', lat);
-
-            var nearestSites = whs.nearestSites(lat,long,100000,3);
-            for (var k = nearestSites.length - 1; k >= 0; k--) {
-              winston.log('info','WH site(s) nearby: ' + nearestSites[k].site);
-            }
-
-          }
-        }
-      break; 
-      case 'studyIndividualsReady':
-        winston.log('info', '=== Individuals ===');
-
-        for (var i = 0; i <  mb.individuals.length; i++) {
-          winston.log('info',mb.individuals[i].local_identifier,'- id:',mb.individuals[i].id );
-        }
-        winston.log('info', '=== ===');
-
-
-      break;
-
-
-    }
-  }
 }
 
-Ciconia();
+// animals factory ... 
+Ciconia.prototype.gatherAnimals = function (){
+  
+  winston.log('info','Gathering animals...');
+  var m = new movebank();
+  
+  m.on('APIdataReady',dataReadyHandler);
+  function dataReadyHandler(type,data) {
+    if(type == 'studyIndividualsReady'){
+        this.animals = data['data'].map(function(mbAnimal){
+          return new animal(mbAnimal,data['studyID']);
+      });
+    }
+  }
+
+  for (var i = APPconfig.studies.length - 1; i >= 0; i--) {
+    m.getStudyIndividuals(APPconfig.studies[i].studyId);
+  }
+
+  // promise ? wait for all animals gathered
+  return ;
+
+};
+
+Ciconia.prototype.getStudyDetails = function (){
+
+  var m = new movebank();
+
+  m.on('APIdataReady',dataReadyHandler);
+  
+  function dataReadyHandler(type,data) {
+    if(type == 'studyDetailsReady'){
+      winston.log('info', 'Studies:');
+      for (var i = 0; i <  mb.studies.length; i++) {
+        winston.log('info', 'Name:',mb.studies[i].name,'- id:',mb.studies[i].id, ' last update: ', mb.studies[i].timestamp_end);
+      }
+    }
+  }
+
+  // Get Studies Details
+  // for (var i = APPconfig.studies.length - 1; i >= 0; i--) {
+  //   mb.getStudyDetails(APPconfig.studies[i].studyId);
+  // }
+}
+
+new Ciconia();

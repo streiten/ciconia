@@ -96,25 +96,27 @@ MoveBank.prototype.getStudyEvents = function($studyId,$individualID,$count){
   // json-auth endpoint here
   request(this.jsonApiBaseURL + '?study_id='+$studyId+'&individual_ids[]='+$individualID+'&max_events_per_individual='+$count+'&sensor_type=gps', function (error, response, body) {
   if (!error && response.statusCode == 200) {
-      this.events = JSON.parse(body);
-      
+      var result = [];
+      result = JSON.parse(body);
       // pass over data in array instead this.individuals ? messagetype, data
-      this.emit('APIdataReady','studyEventsReady');
+      this.emit('APIdataReady','studyEventsReady',result);
   } else {
     throw error;
   }
 }.bind(this)).auth(this.user, this.password, false);
 };
 
-MoveBank.prototype.getStudyIndividuals = function($studyId){
-  request('https://www.movebank.org/movebank/service/direct-read?entity_type=individual&study_id=' + $studyId, function (error, response, body) {
+MoveBank.prototype.getStudyIndividuals = function(studyID){
+  request('https://www.movebank.org/movebank/service/direct-read?entity_type=individual&study_id=' + studyID, function (error, response, body) {
   if (!error && response.statusCode == 200) {
     var options = { delimiter : ',' , columns: true };
     parse(body, options, function(err, output){
+      var result = [];
+      result['data'] = output; 
+      result['studyID'] = studyID;
       if(err) throw err; 
-      this.individuals = output;
-      // pass over data in array instead this.individuals ? messagetype, data
-      this.emit('APIdataReady','studyIndividualsReady');
+      this.emit('APIdataReady','studyIndividualsReady',result);
+
     }.bind(this));
   }
 }.bind(this)).auth(this.user, this.password, false);

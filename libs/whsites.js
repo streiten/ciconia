@@ -36,6 +36,8 @@ WHsites.prototype.nearestSites = function (lat,long,dist,count){
     return result;
 
 };
+
+
   // XML Structure
   // <row>
   //   <category>Cultural</category>
