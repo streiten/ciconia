@@ -10,12 +10,16 @@ APPconfig = JSON.parse(fs.readFileSync(__dirname + '/../config.json', 'utf8'));
 
 module.exports = Animal; 
 
-function Animal(data,studyID){
+function Animal(data,studyId){
 
-  this.mbData = data;
-  this.ID = this.mbData.id;
-  this.studyID = studyID;
+  this.ID = data.id;
+  this.studyId = studyId;
+  this.name = data.local_identifier;
 
+  // this.getLastEvent(event => {
+  //   console.log(this.name,':',JSON.stringify(event,null,2));
+  // });
+  
   // {   comments: '3rd nest in Feres',
   //     death_comments: '',
   //     earliest_date_born: '2013-05-15 00:00:00.000',
@@ -33,44 +37,35 @@ function Animal(data,studyID){
   //   winston.log('info',this.mbData.local_identifier,'- id:',this.mbData.id );
   // }
 
-  this.lastEvent = this.getLastEvent();
   // this.allEvents = this.getAllEvents();
   // this.currentLocation = 0;
   // this.currentLocationName = this.getLocation();
 
 }
 
-Animal.prototype.getLastEvent = function(){
+Animal.prototype.getLastEvent = function(callback){
    
    var m = new movebank();
-   
-   m.on('APIdataReady',dataReadyHandler.bind(this));
-   function dataReadyHandler(type,data) {
-     if(type == 'studyEventsReady'){
-      for (var j = data.individuals.length - 1; j >= 0; j--) {
-        for (var i = 0; i <  data.individuals[j].locations.length; i++) {
-          
-          var format = "llll";
-          var ts = moment(data.individuals[j].locations[i].timestamp); 
-          var long = data.individuals[j].locations[i].location_long;
-          var lat = data.individuals[j].locations[i].location_lat;
+         
+   m.getStudyEvents(this.studyId,this.ID,1,data => {
+    // for each ?? last Event => only should return only one ?
+    data.individuals[0].locations.forEach( location => {
+      var format = "llll";
+      var ts = moment(location.timestamp); 
+      var long = location.location_long;
+      var lat = location.location_lat;
 
-          if( ts.year() == 2017) {
-            winston.log('info','___',this.studyID,'____',this.ID,'___');
-            winston.log('info', data.individuals[j].individual_local_identifier,'- t:', ts.format(format), ' - long:', long,' lat:', lat);
-          }
+      var event = {
+        'timestamp' :  moment(location.timestamp),
+        'long' : location.location_long,
+        'lat' : location.location_lat
+      };
 
-          // var nearestSites = whs.nearestSites(lat,long,100000,3);
-          // for (var k = nearestSites.length - 1; k >= 0; k--) {
-          //   winston.log('info','WH site(s) nearby: ' + nearestSites[k].site);
-          // }
-
-        }
+      if(typeof callback === "function"){
+        callback(event);
       }
-     }
-   }
-    
-   m.getStudyEvents(this.studyID,this.ID,1);
+    });
+  });
 
 };
 
@@ -92,7 +87,10 @@ Animal.prototype.getWeather = function (lat,long,timestamp) {
 }
 
 Animal.prototype.getPOIs = function (lat,long,timestamp) {
-
+        // var nearestSites = whs.nearestSites(lat,long,100000,3);
+        // for (var k = nearestSites.length - 1; k >= 0; k--) {
+        //   winston.log('info','WH site(s) nearby: ' + nearestSites[k].site);
+        // }
 }
 
 // getMood

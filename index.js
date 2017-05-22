@@ -6,23 +6,28 @@ var express = require('express');
 var movebank = require('./libs/movebank.js');
 var environment = require('./libs/environmentData.js');
 var animal = require('./libs/animal.js');
-var mysql
+
+var later = require('later');
+
 var app = express();
+const nodemailer = require('nodemailer');
 
 var winston = require('winston');
 var http = require('http').Server(app);
 
-const sequelize = new Sequelize('ciconia', 'root', 'root');
-
-const Animal = sequelize.define('animal', {
-  id: { type: Sequelize.INTEGER, primaryKey: true }, 
-  studyId: Sequelize.INTEGER,
-  name: Sequelize.STRING
-});
-
-Animal.findAll().then(animals => {
-  console.log(animals);
-});
+let smtpConfig = {
+    host: APPconfig.smtp.host,
+    port: 465,
+    secure: true, // upgrade later with STARTTLS
+    auth: {
+        user: APPconfig.smtp.user,
+        pass: APPconfig.smtp.pass
+    },
+    tls: {
+        // do not fail on invalid certs
+        rejectUnauthorized: false
+    }
+};
 
 // /**
 //  * The Webserving
@@ -46,68 +51,95 @@ Animal.findAll().then(animals => {
 function Ciconia() {
   
   APPconfig = JSON.parse(fs.readFileSync('./config.json', 'utf8'));
+
+  const sequelize = new Sequelize(APPconfig.db.db, APPconfig.db.user, APPconfig.db.pass);
+
+  const Animal = sequelize.define('animal', {
+    id: { type: Sequelize.INTEGER, primaryKey: true }, 
+    studyId: Sequelize.INTEGER,
+    name: Sequelize.STRING
+  });
   
   winston.level = 'debug';
   winston.log('info', 'Ciconia started...');
-  
-  //this.animals = [];
-  //this.gatherAnimals();
-  
-  // update data from api scheduler (every h) -> send E-Mail
 
-  // // Scheduled
-  // setInterval(function(){
-  //   winston.log('info', '===.===');
-  //   for (var i = APPconfig.individuals.length - 1; i >= 0; i--) {
-  //     mb.getStudyEvents(APPconfig.individuals[i].studyId,APPconfig.individuals[i].individualId,5);
-  //   } 
-  // },15 * 60 * 1000);
+  Animal.findAll().then(animals => {
+    this.animals = animals.map(function(aml){
+        var mbAnimal = { 'id': aml.id , 'local_identifier' : aml.name };
+        return new animal(mbAnimal,aml.studyId);
+    }.bind(this));
+  });
 
+  // this.gatherAnimals(APPconfig.studies,animals => {
+  //   animals.forEach(animal => {
+  //     console.log(animal.name);
+  //   });
+  // });
+
+  // create reusable transporter object using the default SMTP transport
+  let transporter = nodemailer.createTransport(smtpConfig);
+  
+  // Schedule
+  function setIntervalCallback (){
+    
+    this.animals.forEach( animal => { 
+      animal.getLastEvent( event => {
+        // console.log(animal.name,':',JSON.stringify(event,null,2)); 
+        var staticMapsURL = 'http://maps.googleapis.com/maps/api/staticmap?center='+event.lat+','+event.long+'&zoom=6&size=400x300&maptype=terrain&markers=color:blue|'+event.lat+','+event.long;
+        var mailbody = animal.name + '<br>';
+        mailbody += '<img src="' + staticMapsURL + '"/>';
+
+        let mailOptions = {
+            from: '"Ciconia Ciconia" <alex@streiten.org>', 
+            to: 'alex@streiten.org', 
+            subject: animal.name + " is here", 
+            html: mailbody
+        };
+
+        transporter.sendMail(mailOptions, (error, info) => {
+            if (error) {
+                return console.log(error);
+            }
+            console.log('Message %s sent: %s', info.messageId, info.response);
+        });
+      }); 
+
+    });
+  };
+
+  var schedule = later.parse.text('at 11:00am every day');
+  later.setInterval(setIntervalCallback.bind(this), schedule);
+  
 }
 
 // animals factory ... 
-Ciconia.prototype.gatherAnimals = function (){
+Ciconia.prototype.gatherAnimals = function(studies,callback){
   
   winston.log('info','Gathering animals...');
   var m = new movebank();
-  
-  m.on('APIdataReady',dataReadyHandler);
-  function dataReadyHandler(type,data) {
-    if(type == 'studyIndividualsReady'){
-        this.animals = data['data'].map(function(mbAnimal){
-          return new animal(mbAnimal,data['studyID']);
-      });
-    }
-  }
-
-  for (var i = APPconfig.studies.length - 1; i >= 0; i--) {
-    m.getStudyIndividuals(APPconfig.studies[i].studyId);
-  }
-
-  // promise ? wait for all animals gathered
-  return ;
-
+  studies.forEach( study => {
+    m.getStudyIndividuals(study.studyId, data => {
+      var animals = data['data'].map(function(mbAnimal){
+          return new animal(mbAnimal,data['studyId']);
+        });
+      if(typeof callback === "function"){
+        callback(animals);
+      }
+    });
+  });
 };
 
-Ciconia.prototype.getStudyDetails = function (){
-
-  var m = new movebank();
-
-  m.on('APIdataReady',dataReadyHandler);
+Ciconia.prototype.getStudyDetails = function (studyId){
   
-  function dataReadyHandler(type,data) {
-    if(type == 'studyDetailsReady'){
+  winston.log('info','Getting study details...');
+  var m = new movebank();
+  m.getStudyDetails(studyId,data => {
       winston.log('info', 'Studies:');
-      for (var i = 0; i <  mb.studies.length; i++) {
+      data.forEach( study => { 
         winston.log('info', 'Name:',mb.studies[i].name,'- id:',mb.studies[i].id, ' last update: ', mb.studies[i].timestamp_end);
-      }
-    }
-  }
+      });
+  });
 
-  // Get Studies Details
-  // for (var i = APPconfig.studies.length - 1; i >= 0; i--) {
-  //   mb.getStudyDetails(APPconfig.studies[i].studyId);
-  // }
-}
+};
 
 new Ciconia();
