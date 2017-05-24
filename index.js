@@ -107,8 +107,8 @@ function Ciconia() {
     });
   };
 
-  var schedule = later.parse.text('at 11:00am every day');
-  later.setInterval(setIntervalCallback.bind(this), schedule);
+  var sched = later.parse.text('at 11:00 am');
+  later.setInterval(setIntervalCallback.bind(this), sched);
   
 }
 
