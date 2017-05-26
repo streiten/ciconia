@@ -86,7 +86,11 @@ function Ciconia() {
       animal.getLastEvent( event => {
         // console.log(animal.name,':',JSON.stringify(event,null,2)); 
         var staticMapsURL = 'http://maps.googleapis.com/maps/api/staticmap?center='+event.lat+','+event.long+'&zoom=6&size=400x300&maptype=terrain&markers=color:blue|'+event.lat+','+event.long;
-        var mailbody = animal.name + '<br>';
+        var mailbody = animal.name + '<br>' + 
+                       'Lat: ' + event.lat + '<br>' +
+                       'Long:' + event.long + '<br>' +
+                       '@:' + event.timestamp ;
+
         mailbody += '<img src="' + staticMapsURL + '"/>';
 
         let mailOptions = {
