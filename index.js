@@ -88,8 +88,8 @@ function Ciconia() {
         var staticMapsURL = 'http://maps.googleapis.com/maps/api/staticmap?center='+event.lat+','+event.long+'&zoom=6&size=400x300&maptype=terrain&markers=color:blue|'+event.lat+','+event.long;
         var mailbody = animal.name + '<br>' + 
                        'Lat: ' + event.lat + '<br>' +
-                       'Long:' + event.long + '<br>' +
-                       '@:' + event.timestamp ;
+                       'Long: ' + event.long + '<br>' +
+                       '@: ' + event.timestamp.format('LLLL') + '<br>';
 
         mailbody += '<img src="' + staticMapsURL + '"/>';
 
@@ -113,6 +113,9 @@ function Ciconia() {
 
   var sched = later.parse.text('at 11:00 am');
   later.setInterval(setIntervalCallback.bind(this), sched);
+
+  // run after 2 sec one 
+  setTimeout(setIntervalCallback.bind(this),2000);
   
 }
 
