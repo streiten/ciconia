@@ -12,7 +12,6 @@ var later = require('later');
 var app = express();
 const nodemailer = require('nodemailer');
 
-var winston = require('winston');
 var http = require('http').Server(app);
 
 let smtpConfig = {
