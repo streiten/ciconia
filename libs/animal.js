@@ -2,6 +2,7 @@ var fs = require('fs');
 var winston = require('winston');
 var movebank = require('./movebank.js');
 var moment = require('moment');
+var geonames = require('geonames.js');
 
 APPconfig = JSON.parse(fs.readFileSync(__dirname + '/../config.json', 'utf8'));
 
@@ -15,6 +16,8 @@ function Animal(data,studyId){
   this.ID = data.id;
   this.studyId = studyId;
   this.name = data.local_identifier;
+  
+  this.geonames = new geonames({username: 'ciconia', lan: 'en', encoding: 'JSON'});  
 
   // this.getLastEvent(event => {
   //   console.log(this.name,':',JSON.stringify(event,null,2));
@@ -78,20 +81,45 @@ Animal.prototype.getView = function(lat,long) {
   // https://www.mapbox.com/api-documentation/?language=cURL#static
 } 
 
-Animal.prototype.getLocation = function(lat,long) {
-  // Reverse GeoCode MapBox API 
+Animal.prototype.getPlaces = function(latitude,longitude) {
+  this.geonames.findNearbyPlaceName( { lat :latitude, lng:longitude }) //get continents
+  .then(function(resp){
+    console.log(resp);
+  })
+  .catch(function(err){
+  }); 
 } 
 
-Animal.prototype.getWeather = function (lat,long,timestamp) {
-  // https://www.wunderground.com/weather/api/d/docs
+
+Animal.prototype.getWeather = function (latitude,longitude) {
+   this.geonames.findNearByWeather( { lat : latitude, lng: longitude }) //get continents
+  .then(function(resp){
+    console.log(resp);
+  })
+  .catch(function(err){
+  });
 }
 
-Animal.prototype.getPOIs = function (lat,long,timestamp) {
-        // var nearestSites = whs.nearestSites(lat,long,100000,3);
-        // for (var k = nearestSites.length - 1; k >= 0; k--) {
-        //   winston.log('info','WH site(s) nearby: ' + nearestSites[k].site);
-        // }
+Animal.prototype.getPOIs = function (latitude,longitude) {
+       this.geonames.findNearbyPOIsOSM( { lat :latitude, lng:longitude }) //get continents
+      .then(function(resp){
+        console.log(resp);
+      })
+      .catch(function(err){
+      });
 }
+
+Animal.prototype.getWikipedia = function (latitude,longitude) {
+
+   this.geonames.findNearbyWikipedia( { lat : latitude, lng: longitude }) //get continents
+  .then(function(resp){
+    console.log(resp);
+  })
+  .catch(function(err){
+  });
+
+}
+  
 
 // getMood
 // a bit rainy today 
