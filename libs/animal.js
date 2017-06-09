@@ -3,6 +3,7 @@ var winston = require('winston');
 var movebank = require('./movebank.js');
 var moment = require('moment');
 var geonames = require('geonames.js');
+var WHSites = require('./whsites.js');
 
 APPconfig = JSON.parse(fs.readFileSync(__dirname + '/../config.json', 'utf8'));
 
@@ -79,7 +80,7 @@ Animal.prototype.getAllEvents = function(){
 Animal.prototype.getView = function(lat,long) {
   // Static MapBox API 
   // https://www.mapbox.com/api-documentation/?language=cURL#static
-} 
+}; 
 
 Animal.prototype.getPlaces = function(latitude,longitude) {
   this.geonames.findNearbyPlaceName( { lat :latitude, lng:longitude }) //get continents
@@ -88,7 +89,7 @@ Animal.prototype.getPlaces = function(latitude,longitude) {
   })
   .catch(function(err){
   }); 
-} 
+};
 
 
 Animal.prototype.getWeather = function (latitude,longitude) {
@@ -98,7 +99,7 @@ Animal.prototype.getWeather = function (latitude,longitude) {
   })
   .catch(function(err){
   });
-}
+};
 
 Animal.prototype.getPOIs = function (latitude,longitude) {
        this.geonames.findNearbyPOIsOSM( { lat :latitude, lng:longitude }) //get continents
@@ -107,7 +108,7 @@ Animal.prototype.getPOIs = function (latitude,longitude) {
       })
       .catch(function(err){
       });
-}
+};
 
 Animal.prototype.getWikipedia = function (latitude,longitude) {
 
@@ -118,8 +119,16 @@ Animal.prototype.getWikipedia = function (latitude,longitude) {
   .catch(function(err){
   });
 
-}
-  
+};
+
+Animal.prototype.getWHS = function (latitude,longitude) {
+
+    var whs = new WHSites(__dirname + '/../data/whc-en.xml');
+    console.log(whs.nearestSites(latitude,longitude,2000,5));
+
+};
+
+
 
 // getMood
 // a bit rainy today 
