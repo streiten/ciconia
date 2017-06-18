@@ -27,12 +27,12 @@ WHsites.prototype.nearestSites = function (lat,long,dist,count){
     
     var sites = clone(this.sites);
 
+    // location needs to be removed due to incopatibilites with sphereKnn detecing it as lat/long falsly
     for (var i = this.sites.length - 1; i >= 0; i--) {
       delete sites[i].location;
     }
-
     var lookup = sphereKnn(sites);
-    var result = lookup(lat, long, count, dist);
+    var result = lookup(lat, long, count, dist * 1000);
     return result;
 
 };

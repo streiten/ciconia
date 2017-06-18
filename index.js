@@ -62,12 +62,6 @@ function Ciconia() {
   winston.level = 'debug';
   winston.log('info', 'Ciconia started...');
 
-  Animal.findAll().then(animals => {
-    this.animals = animals.map(function(aml){
-        var mbAnimal = { 'id': aml.id , 'local_identifier' : aml.name };
-        return new animal(mbAnimal,aml.studyId);
-    }.bind(this));
-  });
 
   // this.gatherAnimals(APPconfig.studies,animals => {
   //   animals.forEach(animal => {
@@ -75,48 +69,75 @@ function Ciconia() {
   //   });
   // });
 
-  // create reusable transporter object using the default SMTP transport
-  let transporter = nodemailer.createTransport(smtpConfig);
-  
-  // Schedule
-  function setIntervalCallback (){
+  Animal.findAll().then(animals => {
+    this.animals = animals.map(function(aml){
+        var mbAnimal = { 'id': aml.id , 'local_identifier' : aml.name };
+        return new animal(mbAnimal,aml.studyId);
+    }.bind(this));
+  }).then(data =>{
+    this.updateAndSend();
+    var sched = later.parse.text('at 11:00 am');
+    // later.setInterval(this.updateAndSend.bind(this), sched);
+  });
     
+}
+
+Ciconia.prototype.updateAndSend = function(){
+
     this.animals.forEach( animal => { 
       animal.getLastEvent( event => {
-        // console.log(animal.name,':',JSON.stringify(event,null,2)); 
-        var staticMapsURL = 'http://maps.googleapis.com/maps/api/staticmap?center='+event.lat+','+event.long+'&zoom=9&size=400x300&maptype=terrain&markers=color:blue|'+event.lat+','+event.long;
+ 
         var mailbody = animal.name + '<br>' + 
                        'Lat: ' + event.lat + '<br>' +
                        'Long: ' + event.long + '<br>' +
                        '@: ' + event.timestamp.format('LLLL') + '<br>';
+        var staticMapsURL = 'http://maps.googleapis.com/maps/api/staticmap?center='+event.lat+','+event.long+'&zoom=9&size=400x300&maptype=terrain&markers=color:blue|'+event.lat+','+event.long;
+        mailbody += '<img src="' + staticMapsURL + '" height="300" width="400" /><br><br>';
 
-        mailbody += '<img src="' + staticMapsURL + '"/>';
 
-        let mailOptions = {
-            from: '"Ciconia Ciconia" <alex@streiten.org>', 
-            to: 'alex@streiten.org', 
-            subject: animal.name + " is here", 
-            html: mailbody
-        };
+        // animal.getPlaces(event.lat,event.long,1,function(data){
+        //     mailbody += data.geonames[0].name + 'is a place nearby. Like '+ data.geonames[0].distance +' units away.</br></br>';
+        // });
 
-        transporter.sendMail(mailOptions, (error, info) => {
-            if (error) {
-                return console.log(error);
-            }
-            console.log('Message %s sent: %s', info.messageId, info.response);
-        });
+        Promise.all([
+           animal.getWikipedia(event.lat,event.long,3),
+           // animal.getPOIs(event.lat,event.long,3),
+           animal.getWHS(event.lat,event.long,1),
+           animal.getWeather(event.lat,event.long)
+           ])
+        .then(all => {
+           
+           markup = all.reduce( (a,b) => {
+             return a + b;
+           });
+
+           mailbody += markup;
+
+           let mailOptions = {
+               from: '"Ciconia Ciconia" <alex@streiten.org>', 
+               to: 'alex@streiten.org', 
+               subject: animal.name + " is here", 
+               html: mailbody
+           };
+
+          let transporter = nodemailer.createTransport(smtpConfig);
+
+          transporter.sendMail(mailOptions, (error, info) => {
+           if (error) {
+               return console.log(error);
+           }
+           console.log('Message %s sent: %s', info.messageId, info.response);
+          });
+
+         });
+  
       }); 
 
     });
   };
 
-  var sched = later.parse.text('at 11:00 am');
-  later.setInterval(setIntervalCallback.bind(this), sched);
+Ciconia.prototype.composeMail = function(studies,callback){}
 
-  // run after 2 sec one 
-  setTimeout(setIntervalCallback.bind(this),2000);
-  
-}
 
 // animals factory ... 
 Ciconia.prototype.gatherAnimals = function(studies,callback){
