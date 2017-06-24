@@ -51,24 +51,30 @@ Animal.prototype.getLastEvent = function(callback){
    
    var m = new movebank();
          
-   m.getStudyEvents(this.studyId,this.ID,1,data => {
-    // for each ?? last Event => only should return only one ?
-    data.individuals[0].locations.forEach( location => {
-      var format = "llll";
-      var ts = moment(location.timestamp); 
-      var long = location.location_long;
-      var lat = location.location_lat;
+   m.getStudyEvents(this.studyId,this.ID,1, (err,data) => {
+    
+    if(!err) {
+      data.individuals[0].locations.forEach( location => {
+        var format = "llll";
+        var ts = moment(location.timestamp); 
+        var long = location.location_long;
+        var lat = location.location_lat;
 
-      var event = {
-        'timestamp' :  moment(location.timestamp),
-        'long' : location.location_long,
-        'lat' : location.location_lat
-      };
+        var event = {
+          'timestamp' :  moment(location.timestamp),
+          'long' : location.location_long,
+          'lat' : location.location_lat
+        };
 
-      if(typeof callback === "function"){
-        callback(event);
-      }
-    });
+        if(typeof callback === "function"){
+          callback(null,event);
+        } 
+      });
+    } else {
+        if(typeof callback === "function"){
+          callback(err,null);
+        } 
+    }
   });
 
 };

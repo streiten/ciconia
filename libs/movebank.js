@@ -54,8 +54,9 @@ MoveBank.prototype.downloadAllStudies = function() {
 
 };
 
-MoveBank.prototype.getStudyDetails = function(studyId){
-  
+MoveBank.prototype.getStudyDetails = function(studyId,callback){
+  // https://www.movebank.org/movebank/service/?entity_type=study&study_id==10531951
+
   request(this.csvApiBaseURL + '?entity_type=study&study_id=' + studyId, function (error, response, body) {
   if (!error && response.statusCode == 200) {
     var options = { delimiter : ',' , columns: true };
@@ -77,20 +78,25 @@ MoveBank.prototype.getStudyEvents = function(studyId,individualID,count,callback
   }
 
   // json-auth endpoint here
+  // https://www.movebank.org/movebank/service/json-auth?study_id=10531951&individual_ids[]=186433630&max_events_per_individual=10&sensor_type=gps
+
   request(this.jsonApiBaseURL + '?study_id='+studyId+'&individual_ids[]='+individualID+'&max_events_per_individual='+count+'&sensor_type=gps', function (error, response, body) {
-  if (!error && response.statusCode == 200) {
-      var result = [];
-      result = JSON.parse(body);
-      if("function" === typeof callback) {
-        callback(result);
-      }
-  } else {
-    throw error;
-  }
-}.bind(this)).auth(this.user, this.password, false);
+    if (!error && response.statusCode == 200) {
+        
+        var result = [];
+        result = JSON.parse(body);
+        if("function" === typeof callback) {
+          callback(null,result);
+        }
+
+    } else {
+      callback('Movebank API said status: ' + response.statusCode + ' for Animal ID: ' + individualID ,null);
+    }
+  }.bind(this)).auth(this.user, this.password, false);
 };
 
 MoveBank.prototype.getStudyIndividuals = function(studyId,callback){
+
   request('https://www.movebank.org/movebank/service/direct-read?entity_type=individual&study_id=' + studyId, function (error, response, body) {
   if (!error && response.statusCode == 200) {
     var options = { delimiter : ',' , columns: true };
