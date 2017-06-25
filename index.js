@@ -84,7 +84,7 @@ function Ciconia() {
 
     this.updateAndSend();
     var sched = later.parse.text('at 11:00 am');
-    // later.setInterval(this.updateAndSend.bind(this), sched);
+    later.setInterval(this.updateAndSend.bind(this), sched);
   });
     
 }
