@@ -250,16 +250,12 @@ Animal.prototype.getWikipediaText = function(data) {
 
 
 Animal.prototype.getWHS = function (latitude,longitude,count) {
-
     var whs = new WHSites(__dirname + '/../data/whc-en.xml');
-    return new Promise( (resolve,reject) => {
-      resolve(
-        this.getWHSText(whs.nearestSites(latitude,longitude,500,count))
-      );
-    }
-    );
-
+    return Promise.all(whs.nearestSites(latitude,longitude,500,count)).then( data => {
+      return this.getWHSText(data);
+    });
 };
+
 
 Animal.prototype.getWHSText = function(data) {
   let markup = '<b>WH Sites within 500km:</b></br>';
@@ -267,10 +263,13 @@ Animal.prototype.getWHSText = function(data) {
          markup += site.site + ' - ' +
          'Category: '+ site.category + '</br>' +
          site.short_description + '</br>' +
+         '<img src="' + site.ogimg_url + '"/></br>' +
          '<a href="'+ site.http_url +'">Read more...</a></br></br>';
        });
     return markup;
 };
+
+
 
 // { category: 'Cultural',
 //    criteria_txt: '(i)(ii)(iii)(iv)',

@@ -6,13 +6,40 @@ var express = require('express');
 var movebank = require('./libs/movebank.js');
 var environment = require('./libs/environmentData.js');
 var animal = require('./libs/animal.js');
-
+var nodemailer = require('nodemailer');
 var later = require('later');
 
-var app = express();
-const nodemailer = require('nodemailer');
+var MapboxClient = require('mapbox');
 
+
+var app = express();
 var http = require('http').Server(app);
+
+/**
+ * The Webserving
+ */
+
+// var httpport = 8080;
+
+// app.use(express.static('public'));
+// app.get('/',requestHandlerHome);
+
+// function requestHandlerHome(request, response) {
+//   response.sendFile( __dirname + '/views/index.html');
+//   // var body = this.mailbodies.reduce( (acc,val) => {
+//   //   return acc + val;
+//   // });
+
+//   // response.send(body);
+
+//   winston.log('info', 'Serving another request ' + request.hostname + ' to ' + request.ip );
+
+// }
+
+// http.listen(httpport, function(){
+//   winston.log('info', 'Webserver started... on ' + httpport);
+// });
+
 
 let smtpConfig = {
     host: APPconfig.smtp.host,
@@ -28,23 +55,6 @@ let smtpConfig = {
     }
 };
 
-// /**
-//  * The Webserving
-//  */
-
-// var httpport = 8080;
-
-// app.use(express.static('public'));
-// app.get('/',requestHandlerHome);
-
-// function requestHandlerHome(request, response) {
-//   response.sendFile( __dirname + '/views/index.html');
-//   winston.log('info', 'Serving another request ' + request.hostname + ' to ' + request.ip );
-// }
-
-// http.listen(httpport, function(){
-//   winston.log('info', 'Webserver started... on ' + httpport);
-// });
 
 
 function Ciconia() {
@@ -59,20 +69,14 @@ function Ciconia() {
     name: Sequelize.STRING,
     active: Sequelize.INTEGER,
   });
-  
+
   winston.level = 'debug';
   winston.log('info', 'Ciconia started...');
-
-
-  // this.gatherAnimals(APPconfig.studies,animals => {
-  //   animals.forEach(animal => {
-  //     console.log(animal.name);
-  //   });
-  // });
 
   Animal.findAll({ where: { active: 1 } }).then(animals => {
     this.animals = animals.map(function(aml){
         var mbAnimal = { 'id': aml.id , 'local_identifier' : aml.name };
+        // TBD: check if animal exists in MB DB !
         return new animal(mbAnimal,aml.studyId);
     }.bind(this));
 
@@ -110,6 +114,19 @@ Ciconia.prototype.sendMail = function(data,callback){
   var staticMapsURL = 'http://maps.googleapis.com/maps/api/staticmap?center='+data.event.lat+','+data.event.long+'&zoom=9&size=400x300&maptype=terrain&markers=color:blue|'+data.event.lat+','+data.event.long;
   mailbody += '<img src="' + staticMapsURL + '" height="300" width="400" /><br><br>';
 
+  var mapboxClient = new MapboxClient(APPconfig.mapbox.accesstoken);
+
+  var satteliteImageUrl = mapboxClient.getStaticURL('streitenorg', APPconfig.mapbox.mapstyle, 1280, 400, {
+    longitude: data.event.long,
+    latitude: data.event.lat,
+    zoom: 16
+  }, {
+    attribution: false,
+    retina: true,
+    logo: false
+  });
+
+  mailbody += '<img src="' + satteliteImageUrl + '" height="200" width="640" /><br><br>';
 
   // data.animal.getPlaces(data.event.lat,data.event.long,1,function(data){
   //     mailbody += data.geonames[0].name + 'is a place nearby. Like '+ data.geonames[0].distance +' units away.</br></br>';
@@ -138,12 +155,18 @@ Ciconia.prototype.sendMail = function(data,callback){
 
     let transporter = nodemailer.createTransport(smtpConfig);
 
-    transporter.sendMail(mailOptions, (error, info) => {
-     if (error) {
-        callback(error,null);
-     }
-     callback(null,'Message ' + info.messageId + ' sent: ' + info.response);
-    });
+    if( 'simulate 'in APPconfig.smtp || APPconfig.smtp.simulate ) {
+      console.log(mailbody);
+      
+      callback(null,'Mail send logged and simulated...');
+    } else {
+       transporter.sendMail(mailOptions, (error, info) => {
+         if (error) {
+            callback(error,null);
+         }
+         callback(null,'Message ' + info.messageId + ' sent: ' + info.response);
+      });
+    }
 
    });
 

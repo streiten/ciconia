@@ -7,14 +7,17 @@
     "csv-parse": "^1.1.7",
     "geonames.js": "^1.0.3",
     "later": "^1.2.0",
+    "mapbox": "^1.0.0-beta7",
     "mysql": "^2.13.0",
     "mysql2": "^1.2.0",
     "nodemailer": "^4.0.1",
-    "request": "^2.74.0"
+    "request": "^2.74.0",
+    "request-promise-native": "^1.0.4"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "cheerio": "^1.0.0-rc.1",
     "clone": "^2.1.1",
     "express": "^4.15.2",
     "json-query": "^2.2.0",

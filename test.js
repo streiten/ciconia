@@ -14,16 +14,16 @@ function Test() {
   winston.log('info', 'Test started...');
 
   // Mare
-  animal = new animal({ id : 186433630} , 10531951);
+  animal = new animal({ id : 128186488} , 128184877);
   
-  // animal.getLastEvent(function(event){
-  //     console.log(event);
-  // });
-  
-  mb = new movebank();
-  mb.getStudyDetails(128184877,function(event){
+  animal.getLastEvent(function(event){
       console.log(event);
   });
+  
+  // mb = new movebank();
+  // mb.getStudyDetails(128184877,function(event){
+  //     console.log(event);
+  // });
 
 // https://www.movebank.org/movebank/service/json-auth?study_id=10531951&individual_ids[]=186433630&max_events_per_individual=10&sensor_type=gps
 

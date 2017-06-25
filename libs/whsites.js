@@ -4,6 +4,8 @@ var parser = require('xml2json');
 var jsonQuery = require('json-query');
 var sphereKnn = require("sphere-knn");
 var clone = require("clone");
+var cheerio = require("cheerio");
+var request = require('request-promise-native');
 
 module.exports = WHsites;
 
@@ -33,9 +35,19 @@ WHsites.prototype.nearestSites = function (lat,long,dist,count){
     }
     var lookup = sphereKnn(sites);
     var result = lookup(lat, long, count, dist * 1000);
-    return result;
+    
+    function getOGImage(site) {
+      return request(site.http_url).then( body => {
+          let $ = cheerio.load(body);
+          site.ogimg_url = $("meta[property='og:image']").attr("content");
+          return site;
+        });
+    }
+    return result.map(getOGImage);
 
 };
+
+
 
 
   // XML Structure
