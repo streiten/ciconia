@@ -4,6 +4,7 @@ var movebank = require('./movebank.js');
 var moment = require('moment');
 var geonames = require('geonames.js');
 var WHSites = require('./whsites.js');
+var MapboxClient = require('mapbox');
 
 APPconfig = JSON.parse(fs.readFileSync(__dirname + '/../config.json', 'utf8'));
 
@@ -19,6 +20,7 @@ function Animal(data,studyId){
   this.name = data.local_identifier;
   
   this.geonames = new geonames({username: 'ciconia', lan: 'en', encoding: 'JSON'});  
+  this.mapboxClient = new MapboxClient(APPconfig.mapbox.accesstoken);
 
   // this.getLastEvent(event => {
   //   console.log(this.name,':',JSON.stringify(event,null,2));
@@ -51,7 +53,7 @@ Animal.prototype.getLastEvent = function(callback){
    
    var m = new movebank();
          
-   m.getStudyEvents(this.studyId,this.ID,1, (err,data) => {
+   m.getIndividualsEvents(this.studyId,this.ID,1, (err,data) => {
     
     if(!err) {
       data.individuals[0].locations.forEach( location => {
@@ -84,8 +86,20 @@ Animal.prototype.getAllEvents = function(){
 };
 
 Animal.prototype.getView = function(lat,long) {
-  // Static MapBox API 
-  // https://www.mapbox.com/api-documentation/?language=cURL#static
+
+  var satteliteImageUrl = this.mapboxClient.getStaticURL('streitenorg', APPconfig.mapbox.mapstyle, 1280, 400, {
+    longitude: long,
+    latitude: lat,
+    zoom: 16
+  }, {
+    attribution: false,
+    retina: true,
+    logo: false
+  });
+
+  return new Promise((resolve,reject) => {
+    resolve('<img src="' + satteliteImageUrl + '" height="200" width="640" /><br><br>');
+  });
 }; 
 
 Animal.prototype.getPlaces = function(latitude,longitude,count) {
@@ -185,22 +199,48 @@ Animal.prototype.getWeatherText = function(data) {
      lat: 41.45 } }
 */
 
+
+
+
 Animal.prototype.getPOIs = function (latitude,longitude,count) {
-  return this.geonames.findNearbyPOIsOSM( { lat :latitude, lng:longitude, maxRows: count })
-  .then( data => {
-    return this.getPOIText(data);
+  var mapboxClient = new MapboxClient(APPconfig.mapbox.accesstoken);
+  
+  return mapboxClient.geocodeReverse({ latitude: latitude, longitude: longitude,options: { type: 'poi',limit: 3 } }, function(err, res) {
+  console.log(res);
+  return res;
+  // res is a GeoJSON document with up to 3 geocoding matches
   });
+
 };
 
-Animal.prototype.getPOIText = function(data) {
-    let markup = '<b>Some POIs:</b></br>'; 
-    data.poi.forEach( poi => {
-      markup += poi.name +
-      'is a ' + poi.typeClass + ' of type ' + poi.typeName + ' thing ' +
-      'and '+ poi.distance + ' away.</br></br>' ;
-    });
-    return markup;
-};
+// Animal.prototype.getPOIText = function(data) {
+//     let markup = '<b>Some POIs:</b></br>'; 
+//     data.poi.forEach( poi => {
+//       markup += poi.name +
+//       'is a ' + poi.typeClass + ' of type ' + poi.typeName + ' thing ' +
+//       'and '+ poi.distance + ' away.</br></br>' ;
+//     });
+//     return markup;
+// };
+
+
+
+// Animal.prototype.getPOIs = function (latitude,longitude,count) {
+//   return this.geonames.findNearbyPOIsOSM( { lat :latitude, lng:longitude, maxRows: count })
+//   .then( data => {
+//     return this.getPOIText(data);
+//   });
+// };
+
+// Animal.prototype.getPOIText = function(data) {
+//     let markup = '<b>Some POIs:</b></br>'; 
+//     data.poi.forEach( poi => {
+//       markup += poi.name +
+//       'is a ' + poi.typeClass + ' of type ' + poi.typeName + ' thing ' +
+//       'and '+ poi.distance + ' away.</br></br>' ;
+//     });
+//     return markup;
+// };
 
 
 /*

@@ -84,7 +84,7 @@ function Ciconia() {
 
     this.updateAndSend();
     var sched = later.parse.text('at 11:00 am');
-    later.setInterval(this.updateAndSend.bind(this), sched);
+    // later.setInterval(this.updateAndSend.bind(this), sched);
   });
     
 }
@@ -114,25 +114,14 @@ Ciconia.prototype.sendMail = function(data,callback){
   var staticMapsURL = 'http://maps.googleapis.com/maps/api/staticmap?center='+data.event.lat+','+data.event.long+'&zoom=9&size=400x300&maptype=terrain&markers=color:blue|'+data.event.lat+','+data.event.long;
   mailbody += '<img src="' + staticMapsURL + '" height="300" width="400" /><br><br>';
 
-  var mapboxClient = new MapboxClient(APPconfig.mapbox.accesstoken);
 
-  var satteliteImageUrl = mapboxClient.getStaticURL('streitenorg', APPconfig.mapbox.mapstyle, 1280, 400, {
-    longitude: data.event.long,
-    latitude: data.event.lat,
-    zoom: 16
-  }, {
-    attribution: false,
-    retina: true,
-    logo: false
-  });
-
-  mailbody += '<img src="' + satteliteImageUrl + '" height="200" width="640" /><br><br>';
 
   // data.animal.getPlaces(data.event.lat,data.event.long,1,function(data){
   //     mailbody += data.geonames[0].name + 'is a place nearby. Like '+ data.geonames[0].distance +' units away.</br></br>';
   // });
 
   Promise.all([
+     data.animal.getView(data.event.lat,data.event.long),
      data.animal.getWikipedia(data.event.lat,data.event.long,3),
      // data.animal.getPOIs(data.event.lat,data.event.long,3),
      data.animal.getWHS(data.event.lat,data.event.long,1),
@@ -157,7 +146,6 @@ Ciconia.prototype.sendMail = function(data,callback){
 
     if( 'simulate 'in APPconfig.smtp || APPconfig.smtp.simulate ) {
       console.log(mailbody);
-      
       callback(null,'Mail send logged and simulated...');
     } else {
        transporter.sendMail(mailOptions, (error, info) => {

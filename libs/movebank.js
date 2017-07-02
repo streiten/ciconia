@@ -13,46 +13,45 @@ function MoveBank(){
 }
 
 MoveBank.prototype.getStudies = function(callback) {
-  console.log('Getting studies...');
-  // Fields:
-  //acknowledgements,bounding_box,citation,comments,grants_used,has_quota,i_am_owner,id,license_terms,location_description,main_location_lat,main_location_long,name,number_of_deployments,number_of_events,number_of_individuals,number_of_tags,principal_investigator_address,principal_investigator_email,principal_investigator_name,study_objective,study_type,suspend_license_terms,timestamp_end,timestamp_start,i_can_see_data,there_are_data_which_i_cannot_see
-  request(this.csvApiBaseURL + '?entity_type=study', function (error, response, body) {
-  if (!error && response.statusCode == 200) {
-    var options = { delimiter : ',' , columns: true };
-    parse(body, options, function(err, output){
-      if(err) throw err;
-
-      var counter = 0; 
-      for (var study in output ) {
-        if(study.i_can_see_data == 'false') {
-          output.splice(study,1);
+    // console.log('Getting studies...');
+    // Fields:
+    //acknowledgements,bounding_box,citation,comments,grants_used,has_quota,i_am_owner,id,license_terms,location_description,main_location_lat,main_location_long,name,number_of_deployments,number_of_events,number_of_individuals,number_of_tags,principal_investigator_address,principal_investigator_email,principal_investigator_name,study_objective,study_type,suspend_license_terms,timestamp_end,timestamp_start,i_can_see_data,there_are_data_which_i_cannot_see
+    request(this.csvApiBaseURL + '?entity_type=study', function (error, response, body) {
+    if (!error && response.statusCode == 200) {
+      var options = { delimiter : ',' , columns: true };
+      parse(body, options, function(err, output){
+        if(err) throw err;
+        console.log('Fetched ' +  output.length + ' studies...');
+        if("function" === typeof callback) {
+          callback(output);
         }
-      }
-      console.log('Fetched ' +  output.length + ' studies...');
-      if("function" === typeof callback) {
-        callback(output);
-      }
 
-    }.bind(this));
-  }
-}.bind(this)).auth(this.user, this.password, false);
-};
-
-MoveBank.prototype.downloadAllStudies = function() {
-  var i = 0;
-
-  var getStudyEvents = function (studiesCount){
-    console.log('Fetching ' + this.studies[i].id + ' - ' + this.studies[i].name);
-
-    if((i+1) == studiesCount) {
-      clearInterval(interval);
+      }.bind(this));
     }
-    i++;
-  }.bind(this);
-  
-  var interval = setInterval(getStudyEvents,500,this.studies.length);
-
+  }.bind(this)).auth(this.user, this.password, false);
 };
+
+MoveBank.prototype.getStudyEvents = function(studyId,start,end,callback) {
+    // console.log('Getting studies events...');
+    // https://www.movebank.org/movebank/service/direct-read?entity_type=event&study_id=2911040&timestamp_start=20080604133045000&timestamp_end=20080604133046000
+    // 20080604133045000
+    // console.log(this.csvApiBaseURL + '?entity_type=event&study_id='+studyId+'&timestamp_start='+ start +'&timestamp_end='+ end);
+    
+    request(this.csvApiBaseURL + '?entity_type=event&study_id='+studyId+'&timestamp_start='+ start +'&timestamp_end='+ end , function (error, response, body) {
+    if (!error && response.statusCode == 200) {
+      var options = { delimiter : ',' , columns: true };
+      parse(body, options, function(err, output){
+        if(err) callback();
+        if("function" === typeof callback) {
+          callback(output);
+        }
+
+      }.bind(this));
+    }
+  }.bind(this)).auth(this.user, this.password, false);
+};
+
+
 
 MoveBank.prototype.getStudyDetails = function(studyId,callback){
   // https://www.movebank.org/movebank/service/?entity_type=study&study_id==10531951
@@ -71,7 +70,8 @@ MoveBank.prototype.getStudyDetails = function(studyId,callback){
 
 };
 
-MoveBank.prototype.getStudyEvents = function(studyId,individualID,count,callback){
+
+MoveBank.prototype.getIndividualsEvents = function(studyId,individualID,count,callback){
   
   if( typeof count == undefined ) {
     var count = 10;
@@ -101,9 +101,9 @@ MoveBank.prototype.getStudyIndividuals = function(studyId,callback){
   if (!error && response.statusCode == 200) {
     var options = { delimiter : ',' , columns: true };
     parse(body, options, function(err, output){
-      var result = [];
-      result['data'] = output; 
-      result['studyId'] = studyId;
+        var result = [];
+        result['data'] = output; 
+        result['studyId'] = studyId;
       if(err) throw err; 
       if("function" === typeof callback) {
         callback(result);
