@@ -4,10 +4,17 @@ block content
   h1= title
   //- p.lead Details(Animals) for study
   .row
-    .col-sm-9
-      h3 Summary
-      p Total distance for last 10 events: #{distance} km
-      h3 Latest Events
+    .col-sm-4
+      h3 Summary (7 days)
+      p Total distance: #{distance} km
+        br
+        | Events: #{events.length}
+        br
+        - var r = Math.round(events.length/7);
+        | Avg. events/day: #{r}
+        br
+
+      h3 Events (7 days)
       if events
         table.table.table-striped.table-hover
           tr
@@ -20,6 +27,6 @@ block content
               td= event.timestamp
               td= event.location_lat + ',' + event.location_long
               td
-    .col-sm-3
-      p Map goes here
+    .col-sm-8
+      #map-individual
 

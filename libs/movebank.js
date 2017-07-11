@@ -80,7 +80,7 @@ MoveBank.prototype.getIndividualsEvents = function(studyId,individualID,count,ca
   // json-auth endpoint here
   // https://www.movebank.org/movebank/service/json-auth?study_id=10531951&individual_ids[]=186433630&max_events_per_individual=10&sensor_type=gps
 
-  request(this.jsonApiBaseURL + '?study_id='+studyId+'&individual_ids[]='+individualID+'&max_events_per_individual='+count+'&sensor_type=gps', function (error, response, body) {
+  request(this.jsonApiBaseURL + '?study_id='+studyId+'&individual_ids[]='+individualID+'&max_events_per_individual='+count, function (error, response, body) {
     if (!error && response.statusCode == 200) {
         
         var result = [];

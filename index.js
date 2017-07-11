@@ -30,7 +30,6 @@ var statusController = require('./controllers/status.js');
 
 var httpport = 8080;
 
-app.use(express.static('public'));
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');
 app.use(compression());
@@ -38,6 +37,7 @@ app.use(sass({
   src: path.join(__dirname, 'public'),
   dest: path.join(__dirname, 'public')
 }));
+app.use(express.static('public'));
 
 app.get('/',homeController.index);
 app.get('/status',statusController.index);

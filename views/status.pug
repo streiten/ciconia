@@ -6,6 +6,7 @@ block content
     .col-sm-9
       h2 Individuals
       if individuals
+        h3 Active
         table.table.table-striped.table-hover
           tr
             th Id
@@ -16,12 +17,35 @@ block content
             th
           
           for individual in individuals
-            tr
-              td= individual.id
-              td= individual.name
-              td= individual.lastUpdate
-              td= individual.distance
-              td= individual.active
-              td
-                - var ids = individual.id + '/' + individual.studyId
-                a(href='/individual/' + ids ) View
+            if individual.active
+              tr
+                td= individual.id
+                td= individual.name
+                td= individual.lastUpdate
+                td= individual.distance
+                td= individual.active
+                td
+                  - var ids = individual.id + '/' + individual.studyId
+                  a(href='/individual/' + ids ) View
+
+        h3 Inactive
+        table.table.table-striped.table-hover
+          tr
+            th Id
+            th Name
+            th Last Update
+            th Distance
+            th Active
+            th
+          
+          for individual in individuals
+            if !individual.active
+              tr
+                td= individual.id
+                td= individual.name
+                td= individual.lastUpdate
+                td= individual.distance
+                td= individual.active
+                td
+                  - var ids = individual.id + '/' + individual.studyId
+                  a(href='/individual/' + ids ) View
