@@ -1,0 +1,25 @@
+extends layout
+
+block content
+  h1= title
+  //- p.lead Details(Animals) for study
+  .row
+    .col-sm-9
+      h3 Summary
+      p Total distance for last 10 events: #{distance} km
+      h3 Latest Events
+      if events
+        table.table.table-striped.table-hover
+          tr
+            th Time
+            th Lat,long
+            th 
+
+          for event in events
+            tr
+              td= event.timestamp
+              td= event.location_lat + ',' + event.location_long
+              td
+    .col-sm-3
+      p Map goes here
+

@@ -1,0 +1,27 @@
+extends layout
+
+block content
+  h1 Status
+  .row
+    .col-sm-9
+      h2 Individuals
+      if individuals
+        table.table.table-striped.table-hover
+          tr
+            th Id
+            th Name
+            th Last Update
+            th Distance
+            th Active
+            th
+          
+          for individual in individuals
+            tr
+              td= individual.id
+              td= individual.name
+              td= individual.lastUpdate
+              td= individual.distance
+              td= individual.active
+              td
+                - var ids = individual.id + '/' + individual.studyId
+                a(href='/individual/' + ids ) View

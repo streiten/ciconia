@@ -1,91 +1,76 @@
 var fs = require('fs');
 var winston = require('winston');
 var moment = require('moment');
-var Sequelize = require('sequelize');
-var express = require('express');
-var movebank = require('./libs/movebank.js');
-var environment = require('./libs/environmentData.js');
-var animal = require('./libs/animal.js');
-var nodemailer = require('nodemailer');
 var later = require('later');
-
 var MapboxClient = require('mapbox');
 
+const path = require('path');
+const express = require('express');
+const nodemailer = require('nodemailer');
+const compression = require('compression');
+const expressStatusMonitor = require('express-status-monitor');
+const sass = require('node-sass-middleware');
 
-var app = express();
-var http = require('http').Server(app);
+const app = express();
+const http = require('http').Server(app);
+
+const movebank = require('./libs/movebank.js');
+const environment = require('./libs/environmentData.js');
+const animal = require('./libs/animal.js');
+
 
 /**
  * The Webserving
  */
 
-// var httpport = 8080;
+var homeController = require('./controllers/home.js');
+var studiesController = require('./controllers/studies.js');
+var individualController = require('./controllers/individual.js');
+var statusController = require('./controllers/status.js');
 
-// app.use(express.static('public'));
-// app.get('/',requestHandlerHome);
+var httpport = 8080;
 
-// function requestHandlerHome(request, response) {
-//   response.sendFile( __dirname + '/views/index.html');
-//   // var body = this.mailbodies.reduce( (acc,val) => {
-//   //   return acc + val;
-//   // });
+app.use(express.static('public'));
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'pug');
+app.use(compression());
+app.use(sass({
+  src: path.join(__dirname, 'public'),
+  dest: path.join(__dirname, 'public')
+}));
 
-//   // response.send(body);
-
-//   winston.log('info', 'Serving another request ' + request.hostname + ' to ' + request.ip );
-
-// }
-
-// http.listen(httpport, function(){
-//   winston.log('info', 'Webserver started... on ' + httpport);
-// });
+app.get('/',homeController.index);
+app.get('/status',statusController.index);
+app.get('/studies',studiesController.index);
+app.get('/studies/:id',studiesController.studyDetail);
+app.get('/individual/:id/:sid',individualController.index);
 
 
-let smtpConfig = {
-    host: APPconfig.smtp.host,
-    port: 465,
-    secure: true, // upgrade later with STARTTLS
-    auth: {
-        user: APPconfig.smtp.user,
-        pass: APPconfig.smtp.pass
-    },
-    tls: {
-        // do not fail on invalid certs
-        rejectUnauthorized: false
-    }
-};
-
+http.listen(httpport, function(){
+  winston.log('info', 'Webserver started... on ' + httpport);
+});
 
 
 function Ciconia() {
   
   APPconfig = JSON.parse(fs.readFileSync('./config.json', 'utf8'));
 
-  const sequelize = new Sequelize(APPconfig.db.db, APPconfig.db.user, APPconfig.db.pass);
-
-  const Animal = sequelize.define('animal', {
-    id: { type: Sequelize.INTEGER, primaryKey: true }, 
-    studyId: Sequelize.INTEGER,
-    name: Sequelize.STRING,
-    active: Sequelize.INTEGER,
-  });
-
   winston.level = 'debug';
   winston.log('info', 'Ciconia started...');
 
-  Animal.findAll({ where: { active: 1 } }).then(animals => {
-    this.animals = animals.map(function(aml){
-        var mbAnimal = { 'id': aml.id , 'local_identifier' : aml.name };
-        // TBD: check if animal exists in MB DB !
-        return new animal(mbAnimal,aml.studyId);
-    }.bind(this));
+  // Animal.findAll({ where: { active: 1 } }).then(animals => {
+  //   this.animals = animals.map(function(aml){
+  //       var mbAnimal = { 'id': aml.id , 'local_identifier' : aml.name };
+  //       // TBD: check if animal exists in MB DB !
+  //       return new animal(mbAnimal,aml.studyId);
+  //   }.bind(this));
 
-  }).then(data =>{
+  // }).then(data =>{
 
-    this.updateAndSend();
-    var sched = later.parse.text('at 11:00 am');
-    // later.setInterval(this.updateAndSend.bind(this), sched);
-  });
+  //   this.updateAndSend();
+  //   var sched = later.parse.text('at 11:00 am');
+  //   // later.setInterval(this.updateAndSend.bind(this), sched);
+  // });
     
 }
 
@@ -113,7 +98,6 @@ Ciconia.prototype.sendMail = function(data,callback){
                  '@: ' + data.event.timestamp.format('LLLL') + '<br>';
   var staticMapsURL = 'http://maps.googleapis.com/maps/api/staticmap?center='+data.event.lat+','+data.event.long+'&zoom=9&size=400x300&maptype=terrain&markers=color:blue|'+data.event.lat+','+data.event.long;
   mailbody += '<img src="' + staticMapsURL + '" height="300" width="400" /><br><br>';
-
 
 
   // data.animal.getPlaces(data.event.lat,data.event.long,1,function(data){

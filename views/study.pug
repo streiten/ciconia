@@ -1,0 +1,25 @@
+extends layout
+
+block content
+  h1= title
+  //- p.lead Details(Animals) for study
+  .row
+    .col-sm-9
+      h2 Individuals
+      if individuals
+        table.table.table-striped.table-hover
+          tr
+            th Id
+            th Name
+            th Last Update
+            th 
+
+
+          for individual in individuals
+            tr
+              td= individual.id
+              td= individual.local_identifier
+              td= individual.lastUpdate
+              td
+                - var iid = individual.id + '/' + studyId
+                a(href='/individual/' + iid ) View

@@ -3,7 +3,6 @@ var winston = require('winston');
 var moment = require('moment');
 var movebank = require('./libs/movebank.js');
 var animal = require('./libs/animal.js');
-// var geode = require('geode');
 var geonames = require('geonames.js');
 
 function dumpStudies() {
