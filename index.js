@@ -6,6 +6,10 @@ var MapboxClient = require('mapbox');
 
 const path = require('path');
 const express = require('express');
+
+
+
+
 const nodemailer = require('nodemailer');
 const compression = require('compression');
 const expressStatusMonitor = require('express-status-monitor');
@@ -13,6 +17,8 @@ const sass = require('node-sass-middleware');
 
 const app = express();
 const http = require('http').Server(app);
+const io = require('socket.io')(http);
+
 
 const movebank = require('./libs/movebank.js');
 const environment = require('./libs/environmentData.js');
@@ -45,6 +51,18 @@ app.get('/studies',studiesController.index);
 app.get('/studies/:id',studiesController.studyDetail);
 app.get('/individual/:id/:sid',individualController.index);
 
+
+// Websocket
+io.on('connection', function (socket) {
+  
+  socket.emit('news', { hello: 'world' });
+
+  socket.on('getMapData', function (reqData) {
+    individualController.getMapData(reqData,socket);
+  });
+
+});
+    
 
 http.listen(httpport, function(){
   winston.log('info', 'Webserver started... on ' + httpport);

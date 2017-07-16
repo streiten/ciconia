@@ -2,19 +2,21 @@ extends layout
 
 block content
   h1= title
+  | <script>var ids = !{ids}</script>
+
   //- p.lead Details(Animals) for study
   .row
-    .col-sm-4
-      h3 Summary (7 days)
-      p Total distance: #{distance} km
-        br
-        | Events: #{events.length}
-        br
-        - var r = Math.round(events.length/7);
-        | Avg. events/day: #{r}
-        br
+    .col-sm-9
+      #map-individual
 
-      h3 Events (7 days)
+      .row
+        .col-sm-9
+          h3 Events (put daterange here)
+        .col-sm-3
+          h3.text-right
+            i.fa.fa-arrow-circle-o-left#prev-week
+            i.fa.fa-arrow-circle-o-right#next-week
+      
       if events
         table.table.table-striped.table-hover
           tr
@@ -27,6 +29,26 @@ block content
               td= event.timestamp
               td= event.location_lat + ',' + event.location_long
               td
-    .col-sm-8
-      #map-individual
 
+    .col-sm-3
+      h3 Summary (7 days)
+      p Total distance traveled: #{distance} km
+      p Distance Start-End: #{distanceAB} km
+       br
+       | Events: #{events.length}
+       br
+       - var r = Math.round(events.length/7);
+       | Avg. events/day: #{r}
+       br
+
+  script.
+    $(document).ready(function() {
+      var socket = io.connect('http://localhost:8080');
+      var map = new mapController(socket);
+      $('#prev-week').on('click',function(e){
+        map.showPrevWeek();
+      })
+      $('#next-week').on('click',function(e){
+        map.showNextWeek();
+      })
+    });

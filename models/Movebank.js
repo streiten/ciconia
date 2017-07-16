@@ -73,7 +73,6 @@ module.exports.getIndividualsEvents = (studyId,individualID,startts,endts,count)
 
   options.url = jsonApiBaseURL + '?study_id='+studyId+'&individual_ids[]='+individualID+countQVar+timeQVar+'&sensor_type=gps&attributes=timestamp,location_long,location_lat,ground_speed,heading,height_above_mean_sea_level,height_above_ellipsoid';
   // https://www.movebank.org/movebank/service/json-auth?study_id=10531951&individual_ids[]=186433630&max_events_per_individual=10&sensor_type=gps
-
   return request(options).then( body =>  {
         return new Promise( (resolve,reject) => {
           var result = JSON.parse(body);
@@ -81,7 +80,8 @@ module.exports.getIndividualsEvents = (studyId,individualID,startts,endts,count)
           resolve(result);
         });
     }).catch( err => {
-      console.log(err);
+      console.log('Err! Movebank said:' + err.statusCode);
+        reject(err);
     });
   };
 

@@ -29,16 +29,46 @@ exports.index = (req, res) => {
     
     events.reverse();
     
-    // console.log(events);
-    
     res.render('individual', {
       title: 'Individual ' + req.params.id + ': ' + data.individuals[0].individual_local_identifier,
+      ids:  JSON.stringify({ id : req.params.id, sid : req.params.sid }),
       events: events,
-      distance: calculateDistance(events)
+      distance: calculateDistance(events),
+      distanceAB: calculateDistance([events[0],events[events.length-1]])
     });
   
   });
 };
+
+
+exports.getMapData = (reqData,socket) => {
+
+  movebank.getIndividualsEvents(reqData.ids.sid,reqData.ids.id,moment(reqData.start),moment(reqData.end)).then( data => {
+
+    var events = data.individuals[0].locations.map( event => {
+      event.timestamp = moment(event.timestamp).format("llll");
+      return event;
+    });
+    events.reverse();
+    socket.emit('mapData',events);
+
+  });
+
+};
+
+const prepareMapData = (events) => {
+
+  var points = events.map((el)=> {
+      return turf.point([ el.location_lat , el.location_long ]);
+    }
+  );
+  var collection = turf.featureCollection(points);
+  var center = turf.center(collection);
+
+  var mapData = { center, events };
+  return mapData;
+  
+}
 
 
 const calculateDistance = (waypoints) => {
