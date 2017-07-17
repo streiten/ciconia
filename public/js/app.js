@@ -6,7 +6,7 @@
   function mapController(socket){
 
     this.socket = socket;
-    this.range = 90;
+    this.range = 30;
     this.eventsStart = moment().subtract(this.range,'days');
     this.eventsEnd =  moment();
 
@@ -26,6 +26,7 @@
           container: 'map-individual',
           style: 'mapbox://styles/mapbox/outdoors-v10',
       });
+      this.map.addControl(new mapboxgl.NavigationControl());
 
       this.socket.emit('getMapData', { 'ids':  ids , 'start' : this.eventsStart , 'end': this.eventsEnd});
 
@@ -47,55 +48,68 @@
     this.eventsStart = moment(this.eventsStart).subtract(this.range,'days');
     this.eventsEnd =  moment(currStart);
 
+    $('#next-week[disabled]').removeAttr('disabled');
+
     this.socket.emit('getMapData', { 'ids':  ids , 'start' : this.eventsStart , 'end': this.eventsEnd});
   
   };
 
-  mapController.prototype.updateEventsMap = function(events){
+  mapController.prototype.updateEventsMap = function(eventsFC){
     
-    // console.log("data:",events);
-
-    var coordinates = events.map((event)=> {
-      return [ event.location_long , event.location_lat ];
-      }
-    );
+    this.map.fitBounds(turf.bbox(eventsFC),{ padding: 20});
 
     if(this.map.getLayer('events') != undefined) {
         this.map.removeLayer('events');
         this.map.removeSource('events');
     }
 
-    var tPoints = events.map((event)=> {
-      return turf.point([event.location_long , event.location_lat]);
-      }
-    );
-    var fc = turf.featureCollection(tPoints);
-    this.map.fitBounds(turf.bbox(fc),{ padding: 20});
-
-
     this.map.addLayer({
         "id": "events",
-        "type": "line",
+        "type": "circle",
+        "paint": {
+            "circle-radius": 5,
+            "circle-color": "#007cbf"
+        },
         "source": {
             "type": "geojson",
-            "data": {
-                "type": "Feature",
-                "properties": {},
-                "geometry": {
-                    "type": "LineString",
-                    "coordinates": coordinates
-                }
-            }
-        },
-        "layout": {
-            "line-join": "round",
-            "line-cap": "round"
-        },
-        "paint": {
-            "line-color": "#2AF",
-            "line-width": 2
+            "data": eventsFC
         }
     });
+
+    // Create a popup, but don't add it to the map yet.
+     var popup = new mapboxgl.Popup({
+         closeButton: false,
+         closeOnClick: false
+     });
+
+     this.map.on('mouseenter', 'events', function(e) {
+         // Change the cursor style as a UI indicator.
+         this.map.getCanvas().style.cursor = 'pointer';
+
+         // Populate the popup and set its coordinates
+         // based on the feature found.
+         popup.setLngLat(e.features[0].geometry.coordinates)
+             .setHTML(getBubbleMarkup(e.features[0].properties))
+             .addTo(this.map);
+
+         function getBubbleMarkup(props) {
+           var m = '';
+           for(prop in props){
+            m += '<b>' + prop + ':</b> ' + props[prop] + '<br>';
+           }
+           return m;
+         }
+
+     }.bind(this));
+
+     this.map.on('mouseleave', 'events', function () {
+         this.map.getCanvas().style.cursor = '';
+         popup.remove();
+     }.bind(this));
+
+    $('#events-range-start').html(this.eventsStart.format('L'));
+    $('#events-range-end').html(this.eventsEnd.format('L'));
+
   };
 
   window.mapController = mapController;

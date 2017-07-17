@@ -8,30 +8,20 @@ block content
   .row
     .col-sm-9
       #map-individual
-
       .row
         .col-sm-9
-          h3 Events (put daterange here)
+          h3
+            span#events-range-start Eearlier
+            | - 
+            span#events-range-end Now
         .col-sm-3
           h3.text-right
-            i.fa.fa-arrow-circle-o-left#prev-week
-            i.fa.fa-arrow-circle-o-right#next-week
+            button.btn.btn-default.fa.fa-arrow-circle-o-left#prev-week
+            button.btn.btn-default.fa.fa-arrow-circle-o-right#next-week(disabled)
       
-      if events
-        table.table.table-striped.table-hover
-          tr
-            th Time
-            th Lat,long
-            th 
-
-          for event in events
-            tr
-              td= event.timestamp
-              td= event.location_lat + ',' + event.location_long
-              td
 
     .col-sm-3
-      h3 Summary (7 days)
+      h3 Summary (last 30 days)
       p Total distance traveled: #{distance} km
       p Distance Start-End: #{distanceAB} km
        br

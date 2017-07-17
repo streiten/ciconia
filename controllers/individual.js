@@ -17,10 +17,10 @@ const APPconfig = JSON.parse(fs.readFileSync('./config.json', 'utf8'));
 
 exports.index = (req, res) => {
 
-  var nowminus7 = moment().subtract(7, 'days');
-  var now = moment();
+  var start = moment().subtract(30, 'days');
+  var end = moment();
 
-  movebank.getIndividualsEvents(req.params.sid,req.params.id,nowminus7,now).then( data => {
+  movebank.getIndividualsEvents(req.params.sid,req.params.id,start,end).then( data => {
 
     var events = data.individuals[0].locations.map( event => {
       event.timestamp = moment(event.timestamp).format("llll");
@@ -50,25 +50,24 @@ exports.getMapData = (reqData,socket) => {
       return event;
     });
     events.reverse();
-    socket.emit('mapData',events);
+
+    socket.emit('mapData',geoJSONify(events));
 
   });
 
 };
 
-const prepareMapData = (events) => {
-
-  var points = events.map((el)=> {
-      return turf.point([ el.location_lat , el.location_long ]);
+const geoJSONify = (events) => {
+  console.log(events);
+  var points = events.map((event)=> {
+      return turf.point([event.location_long , event.location_lat], event );
     }
   );
   var collection = turf.featureCollection(points);
-  var center = turf.center(collection);
 
-  var mapData = { center, events };
-  return mapData;
+  return collection;
   
-}
+};
 
 
 const calculateDistance = (waypoints) => {
