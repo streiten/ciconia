@@ -9,6 +9,9 @@ const Animal = sequelize.define('animal', {
   studyId: Sequelize.INTEGER,
   name: Sequelize.STRING,
   active: Sequelize.INTEGER,
+  featureDateStart: Sequelize.DATE,
+  featureDateEnd: Sequelize.DATE,
+  featureRange: Sequelize.INTEGER
 });
 
 module.exports = Animal;

@@ -6,39 +6,65 @@ block content
 
   //- p.lead Details(Animals) for study
   .row
-    .col-sm-9
-      #map-individual
-      .row
-        .col-sm-9
-          h3
-            span#events-range-start Eearlier
-            | - 
-            span#events-range-end Now
-        .col-sm-3
-          h3.text-right
-            button.btn.btn-default.fa.fa-arrow-circle-o-left#prev-week
-            button.btn.btn-default.fa.fa-arrow-circle-o-right#next-week(disabled)
-      
+    .col-sm-12
+      #map-individual      
 
-    .col-sm-3
-      h3 Summary (last 30 days)
-      p Total distance traveled: #{distance} km
-      p Distance Start-End: #{distanceAB} km
+  .row
+    
+    .col-sm-6
+      
+      h3 
+        span#events-range-start Eearlier
+        | - 
+        span#events-range-end Now
+      p Total distance traveled: 
+       span#events-distance
+       | km
+      p Distance Start-End: 
+       span#events-distanceAB  
+       | km
        br
-       | Events: #{events.length}
+       | Events: 
+       span#events-count 
        br
-       - var r = Math.round(events.length/7);
-       | Avg. events/day: #{r}
+       | Events per day: 
+       span#events-avg
        br
+
+    .col-sm-6
+      h3
+      button.btn.btn-default.fa.fa-arrow-circle-o-left#prev-week
+      button.btn.btn-default.fa.fa-arrow-circle-o-right#next-week(disabled)
+      button.btn.btn-default.fa.fa-play#map-fly
+      button.btn.btn-default.fa.fa-stop#map-stop
 
   script.
+
+    var eventFeature = {
+      start : "#{featureDateStart}",
+      end  : "#{featureDateEnd}",
+      range : #{featureRange},
+    }
+
     $(document).ready(function() {
+
       var socket = io.connect('http://localhost:8080');
       var map = new mapController(socket);
+      
       $('#prev-week').on('click',function(e){
         map.showPrevWeek();
       })
+
       $('#next-week').on('click',function(e){
         map.showNextWeek();
       })
+
+      $('#map-fly').on('click',function(e){
+        map.flyToNextEvent();
+      })
+
+      $('#map-stop').on('click',function(e){
+        map.flyStop();
+      })
+
     });

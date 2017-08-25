@@ -3,11 +3,15 @@ var fs = require('fs');
 var moment = require('moment');
 var sphereKnn = require("sphere-knn");
 var movebank = require('../models/Movebank.js');
+const animal = require('../models/Animal.js');
+
 var turf = require('@turf/turf');
 
 // var animal = require('./libs/animal.js');
 // var geonames = require('geonames.js');
 const APPconfig = JSON.parse(fs.readFileSync('./config.json', 'utf8'));
+
+
 
 
 /**
@@ -28,14 +32,18 @@ exports.index = (req, res) => {
     });
     
     events.reverse();
+
+    animal.find({ where: { id: req.params.id } }).then(animal => {
     
-    res.render('individual', {
-      title: 'Individual ' + req.params.id + ': ' + data.individuals[0].individual_local_identifier,
-      ids:  JSON.stringify({ id : req.params.id, sid : req.params.sid }),
-      events: events,
-      distance: calculateDistance(events),
-      distanceAB: calculateDistance([events[0],events[events.length-1]])
+      res.render('individual', {
+        title: 'Individual ' + req.params.id + ': ' + data.individuals[0].individual_local_identifier,
+        ids:  JSON.stringify({ id : req.params.id, sid : req.params.sid }),
+        featureRange: animal.featureRange
+      });
+
     });
+
+
   
   });
 };
@@ -43,22 +51,39 @@ exports.index = (req, res) => {
 
 exports.getMapData = (reqData,socket) => {
 
-  movebank.getIndividualsEvents(reqData.ids.sid,reqData.ids.id,moment(reqData.start),moment(reqData.end)).then( data => {
+  animal.find({ where: { id: reqData.ids.id } }).then(animal => {
+    
+    if(!reqData.start){
+      reqData.start = animal.featureDateStart;
+    }
+    
+    if(!reqData.end){
+      reqData.end = animal.featureDateEnd;
+    }
 
-    var events = data.individuals[0].locations.map( event => {
-      event.timestamp = moment(event.timestamp).format("llll");
-      return event;
+    movebank.getIndividualsEvents(reqData.ids.sid,reqData.ids.id,moment(reqData.start),moment(reqData.end)).then( data => {
+
+      var events = data.individuals[0].locations.map( event => {
+        event.timestamp = moment(event.timestamp).format("llll");
+        return event;
+      });
+      events.reverse();
+
+      socket.emit('mapData',geoJSONify(events));
+
     });
-    events.reverse();
-
-    socket.emit('mapData',geoJSONify(events));
 
   });
+
+
+
 
 };
 
 const geoJSONify = (events) => {
-  console.log(events);
+  
+  // console.log(events);
+  
   var points = events.map((event)=> {
       return turf.point([event.location_long , event.location_lat], event );
     }
@@ -68,7 +93,6 @@ const geoJSONify = (events) => {
   return collection;
   
 };
-
 
 const calculateDistance = (waypoints) => {
   
@@ -88,5 +112,10 @@ const calculateDistance = (waypoints) => {
     }
   });
   return Math.round(distance);
-
 }
+
+const getFeatureDate = (individualId) => {
+  
+
+
+};
