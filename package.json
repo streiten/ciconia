@@ -8,6 +8,7 @@
     "compression": "^1.6.2",
     "csv-parse": "^1.1.7",
     "express-status-monitor": "^0.1.9",
+    "feather-icons": "^3.2.2",
     "geonames.js": "^1.0.3",
     "later": "^1.2.0",
     "mapbox": "^1.0.0-beta7",
