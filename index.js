@@ -7,9 +7,6 @@ var MapboxClient = require('mapbox');
 const path = require('path');
 const express = require('express');
 
-
-
-
 const nodemailer = require('nodemailer');
 const compression = require('compression');
 const expressStatusMonitor = require('express-status-monitor');
@@ -21,7 +18,7 @@ const io = require('socket.io')(http);
 
 
 const movebank = require('./libs/movebank.js');
-const environment = require('./libs/environmentData.js');
+// const environment = require('./libs/environmentData.js');
 const animal = require('./libs/animal.js');
 
 
@@ -32,6 +29,7 @@ const animal = require('./libs/animal.js');
 var homeController = require('./controllers/home.js');
 var studiesController = require('./controllers/studies.js');
 var individualController = require('./controllers/individual.js');
+var storyController = require('./controllers/story.js');
 var statusController = require('./controllers/status.js');
 
 var httpport = 8080;
@@ -50,6 +48,7 @@ app.get('/status',statusController.index);
 app.get('/studies',studiesController.index);
 app.get('/studies/:id',studiesController.studyDetail);
 app.get('/individual/:id/:sid',individualController.index);
+app.get('/story/:id/',storyController.index);
 
 
 // Websocket
@@ -121,8 +120,7 @@ Ciconia.prototype.sendMail = function(data,callback){
   // data.animal.getPlaces(data.event.lat,data.event.long,1,function(data){
   //     mailbody += data.geonames[0].name + 'is a place nearby. Like '+ data.geonames[0].distance +' units away.</br></br>';
   // });
-
-  Promise.all([
+Promise.all([
      data.animal.getView(data.event.lat,data.event.long),
      data.animal.getWikipedia(data.event.lat,data.event.long,3),
      // data.animal.getPOIs(data.event.lat,data.event.long,3),
@@ -161,7 +159,6 @@ Ciconia.prototype.sendMail = function(data,callback){
    });
 
 };
-
 
 // animals factory ... 
 Ciconia.prototype.gatherAnimals = function(studies,callback){

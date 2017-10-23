@@ -33,10 +33,15 @@ block content
 
     .col-sm-6
       h3
-      button.btn.btn-default.fa.fa-arrow-circle-o-left#prev-week
-      button.btn.btn-default.fa.fa-arrow-circle-o-right#next-week(disabled)
+      button.btn.btn-default.fa.fa-arrow-circle-o-left#prev-week 
+      button.btn.btn-default.fa.fa-times-circle#reset-week
+      button.btn.btn-default.fa.fa-arrow-circle-o-right#next-week(disabled) 
       button.btn.btn-default.fa.fa-play#map-fly
       button.btn.btn-default.fa.fa-stop#map-stop
+      br
+      br
+      -var id = JSON.parse(ids).id 
+      a(href="/story/" + id )#generate-content View Story
 
   script.
 

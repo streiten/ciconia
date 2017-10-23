@@ -1,7 +1,11 @@
+@import url('https://rsms.me/inter/inter-ui.css');
+
+
 @import "themes/default/variables";
 
 @import "lib/bootstrap/bootstrap";
 @import "lib/font-awesome/font-awesome";
+
 
 @import "themes/default/default";
 
@@ -16,6 +20,7 @@ html {
 body {
   padding-top: 60px;
   margin-bottom: 75px;
+
 }
 
 footer {
@@ -65,8 +70,13 @@ textarea {
 // Font Icons
 // -------------------------
 
-.fa {
-  margin-right: 6px;
+.fa,.feather {
+  margin-right: 10px;
+}
+
+.feather.feather-feather {
+  width: 18px;
+  height: 18px;
 }
 
 #map-individual {

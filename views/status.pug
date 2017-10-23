@@ -15,6 +15,7 @@ block content
             th Distance
             th Active
             th
+            th
           
           for individual in individuals
             if individual.active
@@ -26,7 +27,9 @@ block content
                 td= individual.active
                 td
                   - var ids = individual.id + '/' + individual.studyId
-                  a(href='/individual/' + ids ) View
+                  a(href='/individual/' + ids ) View Events
+                td
+                  a(href="/story/" + individual.id )#generate-content View current story
 
         h3 Inactive
         table.table.table-striped.table-hover

@@ -12,6 +12,8 @@
     "geonames.js": "^1.0.3",
     "later": "^1.2.0",
     "mapbox": "^1.0.0-beta7",
+    "mjml": "^3.3.5",
+    "mustache": "^2.3.0",
     "mysql": "^2.13.0",
     "mysql2": "^1.2.0",
     "node-sass-middleware": "^0.11.0",

@@ -33,8 +33,8 @@
 
     this.map = new mapboxgl.Map({
         container: 'map-individual',
-        //style: 'mapbox://styles/mapbox/outdoors-v10',
-        style: 'mapbox://styles/mapbox/satellite-v9',
+        style: 'mapbox://styles/mapbox/outdoors-v10',
+        //style: 'mapbox://styles/mapbox/satellite-v9',
 
     });
     this.map.addControl(new mapboxgl.NavigationControl());
@@ -129,18 +129,9 @@
     return Math.round(distance);
   }
 
-  mapController.prototype.updateEventsMap = function(eventsFC){
+  mapController.prototype.convertToLineStringGeoJson = (obj) => {
 
-    this.map.fitBounds(turf.bbox(eventsFC),{ padding: 20});
-
-    if(this.map.getLayer('events') != undefined) {
-        this.map.removeLayer('events');
-        this.map.removeSource('events');
-        this.map.removeLayer('events-line');
-        this.map.removeSource('events-line');
-    }
-
-    var cordsForLineString = turf.combine(eventsFC).features[0].geometry.coordinates;
+    var cordsForLineString = turf.combine(obj).features[0].geometry.coordinates;
 
     var lineGeoJson = {
     "type": "FeatureCollection",
@@ -153,6 +144,32 @@
       }]
     };
 
+    return lineGeoJson;
+  
+  };
+
+  mapController.prototype.updateEventsMap = function(eventsFC){
+
+    this.map.fitBounds(turf.bbox(eventsFC),{ padding: 20});
+
+    if(this.map.getLayer('events') != undefined) {
+        this.map.removeLayer('events');
+        this.map.removeSource('events');
+        this.map.removeLayer('events-line');
+        this.map.removeSource('events-line');
+
+        this.map.removeLayer('events-simple');
+        this.map.removeSource('events-simple');
+
+        this.map.removeLayer('events-smooth');
+        this.map.removeSource('events-smooth');
+
+        this.map.removeLayer('events-smooth-points');
+        this.map.removeSource('events-smooth-points');
+
+    }
+
+    var linestring = this.convertToLineStringGeoJson(eventsFC);
     this.map.addLayer({
         "id": "events-line",
         "type": "line",
@@ -166,59 +183,83 @@
          },
         "source": {
             "type": "geojson",
-            "data": lineGeoJson
+            "data": linestring
         }
     });
 
-    // var smoothlineGeoJson = turf.bezier(turf.combine(eventsFC).features[0],10000,0.85);
-    
-    // var simpleGeoJson = turf.simplify(turf.combine(eventsFC).features[0]);
-    // console.log(simpleGeoJson);
 
-    // var cordsForLineString = simpleGeoJson.geometry.coordinates;
+    // evenout location clusters first    
+    var simpleGeoJson = turf.simplify(linestring,0.05,true);
+    //console.log('sls',simpleGeoJson);
 
-    // console.log(cordsForLineString);
+    // the simple way
+    this.map.addLayer({
+            "id": "events-simple",
+            "type": "line",
+            "layout": {
+                       "line-join": "round",
+                       "line-cap": "round"
+                   },
+             "paint": {
+                 "line-color": "#0F0",
+                 "line-width": 1
+             },
+            "source": {
+                "type": "geojson",
+                "data": simpleGeoJson
+            }
+        });
 
+    var smoothlineFeature = turf.bezier(simpleGeoJson.features[0],100000,0.5);
+    // console.log('smooth ls',smoothlineFeature);
 
-    // var simpleLineGeoJson = {
-    // "type": "FeatureCollection",
-    // "features": [{
-    //     "type": "Feature",
-    //     "geometry": {
-    //         "type": "LineString",
-    //         "coordinates": cordsForLineString
-    //     }
-    //   }]
-    // };
+    // the smooth way
+    this.map.addLayer({
+            "id": "events-smooth",
+            "type": "line",
+            "layout": {
+                       "line-join": "round",
+                       "line-cap": "round"
+                   },
+             "paint": {
+                 "line-color": "#00F",
+                 "line-width": 2
+             },
+            "source": {
+                "type": "geojson",
+                "data": smoothlineFeature
+            }
+        });
 
-    // this.map.addLayer({
-    //         "id": "events-smooth",
-    //         "type": "line",
-    //         "layout": {
-    //                    "line-join": "round",
-    //                    "line-cap": "round"
-    //                },
-    //          "paint": {
-    //              "line-color": "#0F0",
-    //              "line-width": 2
-    //          },
-    //         "source": {
-    //             "type": "geojson",
-    //             "data": simpleLineGeoJson
-    //         }
-    //     });
-
-
+    // the events postitions
     this.map.addLayer({
         "id": "events",
         "type": "circle",
         "paint": {
             "circle-radius": 2,
-            "circle-color": "#FFF"
+            "circle-color": "#F00"
         },
         "source": {
             "type": "geojson",
             "data": eventsFC
+        }
+    });
+
+    var smoothPoints = turf.multiPoint(smoothlineFeature.geometry.coordinates);
+
+    // console.log(smoothlineFeature.geometry.coordinates);
+
+    // the smooth ways points
+    this.map.addLayer({
+        "id": "events-smooth-points",
+        "type": "circle",
+        "paint": {
+            "circle-radius": 2,
+            "circle-color": "#FF0"
+        },
+        "source": {
+            "type": "geojson",
+            "data": smoothPoints
         }
     });
 
