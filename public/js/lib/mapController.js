@@ -85,6 +85,16 @@
   
   };
 
+  mapController.prototype.resetWeek = function(){
+    
+    this.eventsEnd = moment();
+    this.eventsStart = moment(this.eventsEnd).subtract(this.range,'days');
+    $('#next-week[disabled]').attr('disabled');
+
+    this.socket.emit('getMapData', { 'ids':  ids , 'start' : this.eventsStart , 'end': this.eventsEnd});
+  
+  };
+
   mapController.prototype.showPrevWeek = function(){
 
     var currStart = this.eventsStart.format();

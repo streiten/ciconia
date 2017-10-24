@@ -64,6 +64,10 @@ block content
         map.showNextWeek();
       })
 
+      $('#reset-week').on('click',function(e){
+        map.resetWeek();
+      })
+
       $('#map-fly').on('click',function(e){
         map.flyToNextEvent();
       })

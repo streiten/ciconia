@@ -66,7 +66,23 @@ const generateStoryMarkup = ( eid ) => {
       // });
 
       var view = {
-        name: "Joe"
+        name: "Alex",
+        individual: "Kerko",
+        distance: "324",
+        country: "Armenia",
+        temperature: "24°",
+        wind: "windy",
+        weather: "sunny",
+        wiki_title: 'Maricopa County - Arizona',
+        wiki_body: 'Maricopa County is a county located in the south-central part of the U.S. state of Arizona. As of the 2010 census, its population was 3,817,117, making it the most populous county in the state, and the fourth-most populous in the United States. It is more populous than 23 states',
+        wiki_distance: "1.234",
+        wiki_img_src: "https://upload.wikimedia.org/wikipedia/commons/4/45/Maricopa_County_Courthouse_October_6_2013_Phoenix_Arizona_2816x2112_Rear.JPG",
+        wiki_url: "https://en.wikipedia.org/wiki/Maricopa_County%2C_Arizona",
+        wh_title: "El Pinacate and Gran Desierto de Altar Biosphere Reserve",
+        wh_body:'The 714,566 hectare site comprises two distinct parts: the dormant volcanic Pinacate Shield of black and red lava flows and desert pavements to the east, and, in the west, the Gran Altar Desert with its ever changing and varied sand dunes that can reach a height of 200 metres. This landscape of dramatic contrast notably features linear, star and dome dunes as well as several arid granite massifs, some as high as 650 metres. The dunes emerge like islands from the sea of sand and harbour distinct and highly diverse plant and wildlife communities, including endemic freshwater fish species and the endemic Sonoran Pronghorn, which is only to be found in northwestern Sonora and in southwestern Arizona (USA). Ten enormous, deep and almost perfectly circular craters, believed to have been formed by a combination of eruptions and collapses, also contribute to the dramatic beauty of the site whose exceptional combination of features are of great scientific interest.',
+        wh_img_src: "http://whc.unesco.org/uploads/thumbs/site_1410_0002-1200-630-20151105134855.jpg",
+        wh_url: "http://whc.unesco.org/en/list/1410",
+        wh_category: "Natural"
       };
 
       var output = mustache.render(html, view);
@@ -302,7 +318,8 @@ const getPOIs = function (latitude,longitude,count) {
 exports.getWikipedia = function (latitude,longitude,count) {
   return geonames.findNearbyWikipedia( { lat : latitude, lng: longitude, maxRows: count })
   .then( data => {
-    return getWikipediaText(data)
+    // also harvest image from og:image of page
+    return getWikipediaText(data);
   });
 };
 
