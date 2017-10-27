@@ -42,7 +42,7 @@
 
       <mj-section padding-top="0">
         <mj-column width="100%">
-          <mj-image padding="0" src="https://api.mapbox.com/styles/v1/streitenorg/cj06u0zc900hl2snyu67jgzod/static/-112.46983,33.50083,16/1280x1280@2x?access_token=pk.eyJ1Ijoic3RyZWl0ZW5vcmciLCJhIjoiY2l5enZoOWcxMDAwazMza2FhNDEya256ZSJ9.O_ikSSrFzwLnOzB860SQpg&attribution=false&logo=false" />
+          <mj-image padding="0" src=" {{ view_img_src }} " />
         </mj-column>
       </mj-section>
 
@@ -83,10 +83,8 @@
         <mj-column width="100%">
           <mj-text>
             <p>Wait! There is more out there. Follow others in diffrent parts of the world.</p>
-            <p>Joe in America</p>
-            <p>Kerko in the east</p>
-            <p></p>
-
+            <p><b>Joe</b> currently in America</p>
+            <p><b>Kerko</b> currently in the east</p>
           </mj-text>
         </mj-column>
       </mj-section>

@@ -16,11 +16,9 @@ const app = express();
 const http = require('http').Server(app);
 const io = require('socket.io')(http);
 
-
 const movebank = require('./libs/movebank.js');
 // const environment = require('./libs/environmentData.js');
 const animal = require('./libs/animal.js');
-
 
 /**
  * The Webserving

@@ -14,4 +14,5 @@ const Animal = sequelize.define('animal', {
   featureRange: Sequelize.INTEGER
 });
 
+
 module.exports = Animal;

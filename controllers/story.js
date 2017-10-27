@@ -6,9 +6,12 @@ var mustache = require('mustache');
 var geonames = require('geonames.js');
 var WHSites = require('../libs/whsites.js');
 var movebank = require('../models/Movebank.js');
+
 const animal = require('../models/Animal.js');
 var StoryData = require('../models/StoryData.js');
 
+animal.hasMany(StoryData, {foreignKey: 'id'});
+StoryData.belongsTo(animal, {foreignKey: 'individualId'});
 
 const mjml = require('mjml');
 const nodemailer = require('nodemailer');
@@ -18,7 +21,6 @@ var turf = require('@turf/turf');
 // var animal = require('./libs/animal.js');
 // var geonames = require('geonames.js');
 const APPconfig = JSON.parse(fs.readFileSync('./config.json', 'utf8'));
-
 
 
 /**
@@ -43,7 +45,7 @@ exports.index = (req, res) => {
 // stories are generated for this time moment in time
 const generateStoryMarkup = ( eid ) => {
 
-  return StoryData.find( { where: { eventId: eid } }).then( result => {
+  return StoryData.findAll( { where: { eventId: eid }, include: [animal] }).then( result => {
     
     // friemel together all the markup
     mjmltpl = fs.readFileSync('./views/mail/template.mjml', 'utf8');
@@ -55,16 +57,14 @@ const generateStoryMarkup = ( eid ) => {
         console.log(errors.map(e => e.formattedMessage).join('\n'))
       }
 
-      // mjmlUtils.inject(pathToHtmlEmailTemplate, {
-      //   name: 'bob',
-      //   profileURL: 'https://app.com/bob',
-      // })
-      // .then(finalTemplate => {
-      //   // finalTemplate is an HTML string containing the template with all occurrences 
-      //   // of `{name}` replaced with "bob", and all occurrences of `{profileURL}` 
-      //   // replaced with "https://app.com/bob". 
-      // });
+      result.forEach( item => {
+        console.log(item.type);
+        console.log(item.animal.name);
+      });
 
+      var markup = '';
+
+      // Intro
       var view = {
         name: "Alex",
         individual: "Kerko",
@@ -73,21 +73,43 @@ const generateStoryMarkup = ( eid ) => {
         temperature: "24°",
         wind: "windy",
         weather: "sunny",
+      };
+      markup += mustache.render(html, view);
+
+      // View - one
+      var view = {
+        view_img_src: "https://api.mapbox.com/styles/v1/streitenorg/cj06u0zc900hl2snyu67jgzod/static/-112.46983,33.50083,16/1280x1280@2x?access_token=pk.eyJ1Ijoic3RyZWl0ZW5vcmciLCJhIjoiY2l5enZoOWcxMDAwazMza2FhNDEya256ZSJ9.O_ikSSrFzwLnOzB860SQpg&attribution=false&logo=false",
+      };
+      markup += mustache.render(html, view);
+
+      // Wiki - loop
+      var view = {
         wiki_title: 'Maricopa County - Arizona',
         wiki_body: 'Maricopa County is a county located in the south-central part of the U.S. state of Arizona. As of the 2010 census, its population was 3,817,117, making it the most populous county in the state, and the fourth-most populous in the United States. It is more populous than 23 states',
         wiki_distance: "1.234",
         wiki_img_src: "https://upload.wikimedia.org/wikipedia/commons/4/45/Maricopa_County_Courthouse_October_6_2013_Phoenix_Arizona_2816x2112_Rear.JPG",
         wiki_url: "https://en.wikipedia.org/wiki/Maricopa_County%2C_Arizona",
+      };
+      markup += mustache.render(html, view);
+
+      // Unesco WHS
+      var view = {
         wh_title: "El Pinacate and Gran Desierto de Altar Biosphere Reserve",
         wh_body:'The 714,566 hectare site comprises two distinct parts: the dormant volcanic Pinacate Shield of black and red lava flows and desert pavements to the east, and, in the west, the Gran Altar Desert with its ever changing and varied sand dunes that can reach a height of 200 metres. This landscape of dramatic contrast notably features linear, star and dome dunes as well as several arid granite massifs, some as high as 650 metres. The dunes emerge like islands from the sea of sand and harbour distinct and highly diverse plant and wildlife communities, including endemic freshwater fish species and the endemic Sonoran Pronghorn, which is only to be found in northwestern Sonora and in southwestern Arizona (USA). Ten enormous, deep and almost perfectly circular craters, believed to have been formed by a combination of eruptions and collapses, also contribute to the dramatic beauty of the site whose exceptional combination of features are of great scientific interest.',
         wh_img_src: "http://whc.unesco.org/uploads/thumbs/site_1410_0002-1200-630-20151105134855.jpg",
         wh_url: "http://whc.unesco.org/en/list/1410",
         wh_category: "Natural"
       };
+      markup += mustache.render(html, view);
 
-      var output = mustache.render(html, view);
-      console.log(output);
-      return output;
+      // Others - loop
+      var view = {
+        name: 'Joe',
+        country: 'Belarus',
+      };
+      markup += mustache.render(html, view);
+      
+      return markup;
 
       } catch(e) {
         if (e.getMessages) {

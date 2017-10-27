@@ -7,6 +7,7 @@ const sequelize = new Sequelize(APPconfig.db.db, APPconfig.db.user, APPconfig.db
 const StoryData = sequelize.define('storydata', {
   id: { type: Sequelize.INTEGER, primaryKey: true }, 
   eventId: Sequelize.INTEGER,
+  individualId: Sequelize.INTEGER,
   type: Sequelize.STRING,
   title: Sequelize.TEXT,
   imgurl: Sequelize.TEXT,
@@ -14,5 +15,7 @@ const StoryData = sequelize.define('storydata', {
   link: Sequelize.TEXT,
   raw: Sequelize.TEXT
 });
+
+
 
 module.exports = StoryData;
