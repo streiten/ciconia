@@ -12,8 +12,6 @@ var turf = require('@turf/turf');
 const APPconfig = JSON.parse(fs.readFileSync('./config.json', 'utf8'));
 
 
-
-
 /**
  * GET /
  * Individual page.
@@ -21,31 +19,42 @@ const APPconfig = JSON.parse(fs.readFileSync('./config.json', 'utf8'));
 
 exports.index = (req, res) => {
 
+  animal.find({ where: { id: req.params.id } }).then(animal => {
+
   var start = moment().subtract(30, 'days');
-  var end = moment();
+  var end = moment();  
 
-  movebank.getIndividualsEvents(req.params.sid,req.params.id,start,end).then( data => {
-
-    var events = data.individuals[0].locations.map( event => {
-      event.timestamp = moment(event.timestamp).format("llll");
-      return event;
-    });
-    
-    events.reverse();
-
-    animal.find({ where: { id: req.params.id } }).then(animal => {
-    
+  movebank.getIndividualsEvents(animal.studyId,animal.id,start,end).then( data => {
+        
       res.render('individual', {
-        title: 'Individual ' + req.params.id + ': ' + data.individuals[0].individual_local_identifier,
-        ids:  JSON.stringify({ id : req.params.id, sid : req.params.sid }),
+        title: 'Individual ' + animal.id + ': ' + data.individuals[0].individual_local_identifier,
+        ids:  JSON.stringify({ id : animal.id, sid : animal.studyId }),
         featureRange: animal.featureRange
       });
 
     });
-
-
   
   });
+
+};
+
+exports.updateLastEvent = (animalId,socket) => {
+
+  animal.find({ where: { id: animalId } }).then(animal => {
+    // instead use last found in local event table ... TBD
+    movebank.getIndividualsEvents(animal.studyId,animal.id,false,false,1).then( data => {
+      var events = data.individuals[0].locations.map( event => {
+        event.timestamp = moment(event.timestamp).format("llll");
+        return event;
+      });
+      events.reverse();
+      animal.update({ lastEventAt : events[0].timestamp });
+      socket.emit('lastEventUpdate',{ 'id' : animalId, 'lastEvent': events[0] });
+
+    });
+
+  });
+
 };
 
 
@@ -74,9 +83,6 @@ exports.getMapData = (reqData,socket) => {
     });
 
   });
-
-
-
 
 };
 
@@ -116,6 +122,4 @@ const calculateDistance = (waypoints) => {
 
 const getFeatureDate = (individualId) => {
   
-
-
 };

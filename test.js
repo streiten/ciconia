@@ -3,10 +3,9 @@ var winston = require('winston');
 var moment = require('moment');
 var movebank = require('./libs/movebank.js');
 var animal = require('./libs/animal.js');
-// var geode = require('geode');
-var geonames = require('geonames.js');
+var Event = require('./models/Event.js');
+var User = require('./models/User.js');
 
-var StoryData = require('../models/StoryData.js');
 
 function Test() {
   
@@ -15,24 +14,31 @@ function Test() {
   winston.level = 'debug';
   winston.log('info', 'Test started...');
 
+  // get all the users
+  User.find({}, function(err, users) {
+    if (err) throw err;
+
+    // object of all the users
+    console.log(users);
+  });
   // Animal.findAll({ where: { active: 1 } }).then(animals => {
 
-  StoryData.findAll().then( rows => {
-    console.log(rows);
-  });
+  // StoryData.findAll().then( rows => {
+  //   console.log(rows);
+  // });
 
-  var data = {
-    eventId: 321,
-    type: 'whs',
-    title: "ABC",
-    body: "ABC",
-    link: "ABC",
-    raw:  "ABC"
-  };
+  // var data = {
+  //   eventId: 321,
+  //   type: 'whs',
+  //   title: "ABC",
+  //   body: "ABC",
+  //   link: "ABC",
+  //   raw:  "ABC"
+  // };
 
-  StoryData.create( data ).then( result => { 
-    // console.log(result);
-  });
+  // StoryData.create( data ).then( result => { 
+  //   // console.log(result);
+  // });
 
 
   // Mare

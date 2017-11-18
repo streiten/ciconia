@@ -1,9 +1,9 @@
 extends layout
 
 block content
-  h1 Status
   .row
-    .col-sm-9
+    .col-sx-12
+      h1 Status
       h2 Individuals
       if individuals
         h3 Active
@@ -11,25 +11,24 @@ block content
           tr
             th Id
             th Name
-            th Last Update
-            th Distance
-            th Active
-            th
-            th
+            th Last Event
+            th Action
           
           for individual in individuals
             if individual.active
               tr
                 td= individual.id
                 td= individual.name
-                td= individual.lastUpdate
-                td= individual.distance
-                td= individual.active
                 td
-                  - var ids = individual.id + '/' + individual.studyId
-                  a(href='/individual/' + ids ) View Events
+                  span.lastEventDate= individual.lastEventAt
+                  | 
+                  a(href='#' data-animalid=individual.id).update-lastEventAt 
+                   | 
+                   i.fa.fa-refresh
                 td
-                  a(href="/story/" + individual.id )#generate-content View current story
+                  a(href='/individual/' + individual.id ) View Details <br>
+                  a(href='/story/' + individual.id ).generate-content View current story <br>
+                  a(href='#' data-animalid=individual.id).update-story-data Update story data <br>
 
         h3 Inactive
         table.table.table-striped.table-hover
@@ -37,9 +36,7 @@ block content
             th Id
             th Name
             th Last Update
-            th Distance
-            th Active
-            th
+            th Action
           
           for individual in individuals
             if !individual.active
@@ -47,8 +44,30 @@ block content
                 td= individual.id
                 td= individual.name
                 td= individual.lastUpdate
-                td= individual.distance
-                td= individual.active
                 td
-                  - var ids = individual.id + '/' + individual.studyId
-                  a(href='/individual/' + ids ) View
+                  a(href='/individual/' + individual.id ) View Details <br>
+                  a(href='/story/' + individual.id ).generate-content View current story <br>
+                  - var animalId = individual.id
+    
+    script.
+      $(document).ready(function() {
+
+        var socket = io.connect('http://localhost:8080');
+        
+        socket.on('lastEventUpdate', data => {
+          
+          $('*[data-animalid="' + data.id + '"]').parent().find('.lastEventDate').html(data.lastEvent.timestamp);
+
+        });
+
+        $('.update-story-data').on('click',function(e){
+          e.preventDefault();
+          socket.emit('updateStoryData', { 'id': $(this).data("animalid")  } );
+        });
+
+        $('.update-lastEventAt').on('click',function(e){
+          e.preventDefault();
+          socket.emit('updateLastEvent', { 'id': $(this).data('animalid')  } );
+        });
+
+      });

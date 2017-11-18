@@ -43,7 +43,10 @@ WHsites.prototype.nearestSites = function (lat,long,dist,count){
           return site;
         });
     }
-    return result.map(getOGImage);
+
+    return Promise.all(result.map(getOGImage)).then( data => {
+      return data;
+    });
 
 };
 

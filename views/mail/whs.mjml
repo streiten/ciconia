@@ -1,0 +1,13 @@
+<mj-section>
+  <mj-column>
+    <mj-text>
+      <p>and even more exciting: the closest UNESCO world heritage site <b><a href="{{ wh_url }}" style="text-decoration: none;color:#616161;">{{ wh_title }}</a></b>. It's a {{ wh_category }} thang. </p>
+    </mj-text>
+    <mj-image padding-top="0" href="{{ wh_url }}" src="{{ wh_img_src }}"/>
+    <mj-text>
+      <p>{{ wh_body }}</p>
+      <p>Awesome, isn't it ?!</p>
+      <p>See you soon, take care.<br> Yours {{ individual }}</p>
+    </mj-text>
+  </mj-column>
+</mj-section>

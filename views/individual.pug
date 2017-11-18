@@ -10,9 +10,7 @@ block content
       #map-individual      
 
   .row
-    
     .col-sm-6
-      
       h3 
         span#events-range-start Eearlier
         | - 
@@ -41,7 +39,9 @@ block content
       br
       br
       -var id = JSON.parse(ids).id 
-      a(href="/story/" + id )#generate-content View Story
+      a(href="/story/" + id )#generate-content View Story  <br>
+      a(href='#' data-animalId=id).update-story-data Update story data <br>
+
 
   script.
 

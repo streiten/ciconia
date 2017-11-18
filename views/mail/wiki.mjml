@@ -1,0 +1,15 @@
+<mj-section>
+  <mj-column width="100%">
+    <mj-text>
+      <p>
+      and some wiki knowledge: 
+
+      {{#wikis}}  
+        <b><a href="{{ wiki_url }}" style='color:#616161;text-decoration: none;'>{{ wiki_title }} </a></b> is closeby. <b>{{ wiki_distance }} units away</b> to be precise. {{ wiki_body }}
+      {{/wikis}}
+      
+      </p>
+    </mj-text>
+    <mj-image href="{{ wiki_url }}" src="{{ wiki_img_src }}" />
+  </mj-column>
+</mj-section>

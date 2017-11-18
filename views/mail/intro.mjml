@@ -1,0 +1,11 @@
+<mj-section padding-top="30px">
+  <mj-column width="100%">
+    <mj-text >
+      <p>Hi {{name}}, it's me <strong>{{ individual }}</strong>.</p>
+      <p>
+         Still in <strong>{{ country }}</strong>. Ground is around <strong>{{ elevation }}</strong> meters above sea level here. It's around <strong>{{ temperature }}°</strong>, kind of <strong>{{ wind }}</strong> and <strong>{{ weather }}</strong>.
+        Here is how it looks around here
+      </p>
+    </mj-text>
+  </mj-column>
+</mj-section>

@@ -24,7 +24,10 @@
       $('#events-count').html(stats.count);
       $('#events-avg').html(stats.eventsbyday);
 
-      this.updateEventsMap(data); 
+      // console.log(data);
+      this.updateEventsMap(data);
+      console.log('First Event: ',data.features[0].properties.timestamp); 
+      console.log('Last Event: ',data.features[data.features.length-1].properties.timestamp); 
 
     });
 
@@ -127,7 +130,6 @@
   };
 
   mapController.prototype.calculateDistance = (waypoints) => {
-    
     var distance = 0;  
     waypoints.forEach((el,idx,arr)=> {
       if(idx+1<arr.length) {

@@ -28,66 +28,7 @@
         </mj-column>
       </mj-section>
 
-      <mj-section padding-top="30px">
-        <mj-column width="100%">
-          <mj-text >
-            <p>Hi {{name}}, it's me <strong>{{ individual }}</strong>.</p>
-            <p>
-              I travelled <strong>{{ distance }}</strong> since we last spoke. Still in <strong>{{ country }}</strong> thou. It's around <strong>{{ temperature }}</strong>, kind of <strong>{{ wind }}</strong> and <strong>{{ weather }}</strong>.
-              Here is how it looks around here
-            </p>
-          </mj-text>
-        </mj-column>
-      </mj-section>
-
-      <mj-section padding-top="0">
-        <mj-column width="100%">
-          <mj-image padding="0" src=" {{ view_img_src }} " />
-        </mj-column>
-      </mj-section>
-
-      <mj-section padding-top="0">
-        <mj-column width="100%">
-          <mj-text font-size="48px" line-height="48px" >
-            <p></p>
-          </mj-text>
-        </mj-column>
-      </mj-section>
-      
-      <mj-section>
-        <mj-column width="100%">
-          <mj-text>
-            <p>
-            and some wiki knowledge: <b><a href="{{ wiki_url }}" style='color:#616161;text-decoration: none;'>{{ wiki_title }} </a></b> is closeby. <b>{{ wiki_distance }} units away</b> to be precise. {{ wiki_body }}
-            </p>
-          </mj-text>
-          <mj-image href="{{ wiki_url }}" src="{{ wiki_img_src }}" />
-        </mj-column>
-      </mj-section>
-
-      <mj-section>
-        <mj-column>
-          <mj-text>
-            <p>and even more exciting: the closest UNESCO world heritage site <b><a href="{{ wh_url }}" style="text-decoration: none;color:#616161;">{{ wh_title }}</a></b>. It's a {{ wh_category }} thang. </p>
-          </mj-text>
-          <mj-image padding-top="0" href="{{ wh_url }}" src="{{ wh_img_src }}"/>
-          <mj-text>
-            <p>{{ wh_body }}</p>
-            <p>Awesome, isn't it ?!</p>
-            <p>See you soon, take care.<br> Yours {{ individual }}</p>
-          </mj-text>
-        </mj-column>
-      </mj-section>
-
-      <mj-section>
-        <mj-column width="100%">
-          <mj-text>
-            <p>Wait! There is more out there. Follow others in diffrent parts of the world.</p>
-            <p><b>Joe</b> currently in America</p>
-            <p><b>Kerko</b> currently in the east</p>
-          </mj-text>
-        </mj-column>
-      </mj-section>
+      {{{body}}}
 
       <mj-section padding="20px 0">
         <mj-column width="3%">
