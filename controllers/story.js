@@ -16,8 +16,6 @@ const mjml = require('mjml');
 
 var turf = require('@turf/turf');
 
-// var animal = require('./libs/animal.js');
-// var geonames = require('geonames.js');
 const APPconfig = JSON.parse(fs.readFileSync('./config.json', 'utf8'));
 
 
@@ -28,10 +26,10 @@ const APPconfig = JSON.parse(fs.readFileSync('./config.json', 'utf8'));
 
 exports.index = (req, res) => {
   
-  animal.find({ where: { id: req.params.id } }).then(animal => {
+  animal.find({ 'id': req.params.id }).then(animal => {
 
     // find last timestamp for this animals storydata available
-    storyData.findOne({where : { individualId : animal.id }, order:  [ [ 'timestamp', 'DESC' ]] }).then( lastStory => {
+    storyData.findOne({where : { 'individualId' : animal.id }, order:  [ [ 'timestamp', 'DESC' ]] }).then( lastStory => {
       
       exports.generateStoryMarkup(moment(lastStory.timestamp).toISOString(), animal, 'Alex' ).then( data => {
        res.render('story', {
@@ -47,17 +45,17 @@ exports.index = (req, res) => {
 
 exports.fetchStoryData = (animalID,start) => {
 
-  animal.find({ where: { id: animalID } }).then(animal => {
+  animal.findOne({ 'id': animalID }).then( animal => {
 
     // find timestamp of last story data in DB and use it as start date for range
-    storyData.findOne({where : { individualId : animalID }, order:  [ [ 'timestamp', 'DESC' ]] }).then( result => {
+    storyData.findOne({where : { 'individualId' : animalID }, order:  [ [ 'timestamp', 'DESC' ]] }).then( result => {
       
       if(result) {
-       console.log(animal.name + ': Last story data @ ' + result.timestamp.toISOString());
+       winston.log('info',animal.name + ': Last story data @ ' + result.timestamp.toISOString());
        start = moment(result.timestamp);
       } else {
         // if there isn't a previous one  the start date from fn arguement is used
-        console.log(animal.name + ': No story data found. Starting @ ' + moment(start).toISOString());
+        winston.log('info',animal.name + ': No story data found. Starting @ ' + moment(start).toISOString());
       };
 
       movebank.getIndividualsEvents(animal.studyId,animal.id,start.add(1,'seconds'),moment()).then( data => {
@@ -69,20 +67,20 @@ exports.fetchStoryData = (animalID,start) => {
             return event;
           });
           
-          console.log('Fetching data for ' + animal.name +' now. '+ events.length + ' events...');
+         winston.log('info','Fetching data for ' + animal.name +' now. '+ events.length + ' events...');
           
           if(events.length > 200 ) {
-              console.log(events.length + 'are too much. Droping everything beyond 200.');
+              winston.log('warning',events.length + 'are too much. Droping everything beyond 200.');
               events.splice(200);            
           }
 
           events.forEach((item,idx) => {
             fetchStoryData(events[idx],animal);
-            console.log('Data fetched for...' + item.timestamp);
+            winston.log('info','Data fetched for...' + item.timestamp);
           });
         
         } else {
-          console.log(animal.name + ': No events for that timerange.');
+          winston.log('info',animal.name + ': No events for that timerange.');
         }
       });
 

@@ -26,9 +26,9 @@ exports.init = () => {
 const updateStoryData = () => {
 
       // get all active animals 
-      animal.findAll({ where: { active: 1 } } ).then( result => { 
+      animal.find({ "active": true } ).then( result => { 
         result.forEach( item => {
-          story.fetchStoryData(item.id,moment().subtract(2,'days'),true);
+          story.fetchStoryData(item.id,moment().subtract(3,'hours'),true);
         });
       });
 

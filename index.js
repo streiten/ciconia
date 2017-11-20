@@ -60,7 +60,7 @@ io.on('connection', function (socket) {
 });
     
 http.listen(httpport, function(){
-  winston.log('info', 'Webserver started... on ' + httpport);
+  winston.log('info', 'Webserver listening on: ' + httpport);
 });
 
 

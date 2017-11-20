@@ -30,8 +30,7 @@ let smtpConfig = {
 exports.sendStory = () => {
 
   // all active animals
-  animal.findAll({ where: { active: true } }).then( animals => {
-
+  animal.find( { 'active': true } ).then( animals => {
       // each animal 
       animals.forEach( animal => {
         // find latest storydata for animal 
@@ -39,7 +38,6 @@ exports.sendStory = () => {
           // generat email markup
 
           var ts = moment(lastStory.timestamp).toISOString();
-          
           console.log(animal.name, 'last storydata ts:', ts);
 
           story.generateStoryMarkup(ts, animal, 'Alex' ).then( htmlbody => {
@@ -54,9 +52,6 @@ exports.sendStory = () => {
       });
     });
   });
-  
-
-
 };
 
 const send = (fromName,to,subject,body) => {

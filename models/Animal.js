@@ -2,23 +2,28 @@ const fs = require('fs');
 const Sequelize = require('sequelize');
 const APPconfig = JSON.parse(fs.readFileSync('./config.json', 'utf8'));
 
-const sequelize = new Sequelize(APPconfig.db.db, APPconfig.db.user, APPconfig.db.pass, {
+var mongoose = require('mongoose');
+mongoose.Promise = global.Promise;
+mongoose.connect(APPconfig.mongodb.host,{  useMongoClient: true });
 
-  // disable logging; default: console.log
-  logging: false
+var Schema = mongoose.Schema;
 
+var animalSchema = new Schema({
+  id: Number,
+  studyId: Number,
+  name: String,
+  active: Boolean,
+  lastEventAt: Date,
+  featureDateStart: Date,
+  featureDateEnd: Date,
+  featureRange: Number,
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: Date
 });
 
-const Animal = sequelize.define('animal', {
-  id: { type: Sequelize.INTEGER, primaryKey: true }, 
-  studyId: Sequelize.INTEGER,
-  name: Sequelize.STRING,
-  lastEventAt: Sequelize.DATE,
-  active: Sequelize.INTEGER,
-  featureDateStart: Sequelize.DATE,
-  featureDateEnd: Sequelize.DATE,
-  featureRange: Sequelize.INTEGER
-});
-
-
+var Animal = mongoose.model('Animal', animalSchema);
 module.exports = Animal;
+
+
+
+

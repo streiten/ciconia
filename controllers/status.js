@@ -1,4 +1,4 @@
-const Animal = require('../models/Animal');
+const animal = require('../models/Animal');
 
 /**
  * GET /
@@ -7,7 +7,7 @@ const Animal = require('../models/Animal');
  
 exports.index = (req, res) => {
   
-  Animal.findAll().then(individuals => {
+  animal.find().then(individuals => {
    res.render('status', {
      title: 'Status',
      individuals: individuals
