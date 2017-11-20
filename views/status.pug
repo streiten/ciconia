@@ -52,7 +52,7 @@ block content
     script.
       $(document).ready(function() {
 
-        var socket = io.connect('http://localhost:8080');
+        var socket = io.connect();
         
         socket.on('lastEventUpdate', data => {
           
