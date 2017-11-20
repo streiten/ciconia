@@ -19,7 +19,7 @@ const APPconfig = JSON.parse(fs.readFileSync('./config.json', 'utf8'));
 
 exports.index = (req, res) => {
 
-  animal.find( { 'id': req.params.id }).then(animal => {
+  animal.findOne( { 'id': req.params.id }).then(animal => {
 
   var start = moment().subtract(30, 'days');
   var end = moment();  
@@ -40,7 +40,7 @@ exports.index = (req, res) => {
 
 exports.updateLastEvent = (animalId,socket) => {
 
-  animal.find( { 'id': animalId } ).then(animal => {
+  animal.findOne( { 'id': animalId } ).then(animal => {
     // instead use last found in local event table ... TBD
     movebank.getIndividualsEvents(animal.studyId,animal.id,false,false,1).then( data => {
       var events = data.individuals[0].locations.map( event => {
@@ -60,7 +60,7 @@ exports.updateLastEvent = (animalId,socket) => {
 
 exports.getMapData = (reqData,socket) => {
 
-  animal.find({ 'id': reqData.ids.id } ).then(animal => {
+  animal.findOne({ 'id': reqData.ids.id } ).then(animal => {
     
     if(!reqData.start){
       reqData.start = animal.featureDateStart;

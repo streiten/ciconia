@@ -43,7 +43,12 @@ block content
               tr
                 td= individual.id
                 td= individual.name
-                td= individual.lastUpdate
+                td
+                  span.lastEventDate= individual.lastEventAt
+                  | 
+                  a(href='#' data-animalid=individual.id).update-lastEventAt 
+                   | 
+                   i.fa.fa-refresh                
                 td
                   a(href='/individual/' + individual.id ) View Details <br>
                   a(href='/story/' + individual.id ).generate-content View current story <br>

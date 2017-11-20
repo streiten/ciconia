@@ -17,10 +17,10 @@ exports.init = () => {
     // mail.sendStory();
 
     // storydata
-    var storyDataschedule = later.parse.text('every 15 min');
+    var storyDataschedule = later.parse.text('every 30 min');
     later.setInterval(updateStoryData,storyDataschedule); 
 
-    updateStoryData();
+    // updateStoryData();
 };
 
 const updateStoryData = () => {

@@ -50,7 +50,7 @@ io.on('connection', function (socket) {
   });
 
   socket.on('updateStoryData', function (animal)  {
-    storyController.fetchStoryData(animal.id,moment().subtract(1,'days'));
+    storyController.fetchStoryData(animal.id,moment().subtract(5,'days'));
   });
 
   socket.on('updateLastEvent', function (animal)  {

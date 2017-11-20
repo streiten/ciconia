@@ -26,7 +26,7 @@ const APPconfig = JSON.parse(fs.readFileSync('./config.json', 'utf8'));
 
 exports.index = (req, res) => {
   
-  animal.find({ 'id': req.params.id }).then(animal => {
+  animal.findOne({ 'id': req.params.id }).then(animal => {
 
     // find last timestamp for this animals storydata available
     storyData.findOne({where : { 'individualId' : animal.id }, order:  [ [ 'timestamp', 'DESC' ]] }).then( lastStory => {
