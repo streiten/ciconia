@@ -49,8 +49,6 @@ exports.fetchStoryData = (animalID,start) => {
 
   animal.find({ where: { id: animalID } }).then(animal => {
 
-    console.log('Fetching StoryData for ' + animal.name );
-
     // find timestamp of last story data in DB and use it as start date for range
     storyData.findOne({where : { individualId : animalID }, order:  [ [ 'timestamp', 'DESC' ]] }).then( result => {
       
@@ -58,6 +56,7 @@ exports.fetchStoryData = (animalID,start) => {
        console.log(animal.name + ': Last story data @ ' + result.timestamp.toISOString());
        start = moment(result.timestamp);
       } else {
+        // if there isn't a previous one  the start date from fn arguement is used
         console.log(animal.name + ': No story data found. Starting @ ' + moment(start).toISOString());
       };
 
@@ -72,9 +71,14 @@ exports.fetchStoryData = (animalID,start) => {
           
           console.log('Fetching data for ' + animal.name +' now. '+ events.length + ' events...');
           
+          if(events.length > 200 ) {
+              console.log(events.length + 'are too much. Droping everything beyond 200.');
+              events.splice(200);            
+          }
+
           events.forEach((item,idx) => {
-            console.log('---', item.timestamp, '---');
             fetchStoryData(events[idx],animal);
+            console.log('Data fetched for...' + item.timestamp);
           });
         
         } else {

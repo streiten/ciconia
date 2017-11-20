@@ -15,9 +15,6 @@ const app = express();
 const http = require('http').Server(app);
 const io = require('socket.io')(http);
 
-const movebank = require('./libs/movebank.js');
-const animal = require('./libs/animal.js');
-
 var homeController = require('./controllers/home.js');
 var studiesController = require('./controllers/studies.js');
 var individualController = require('./controllers/individual.js');

@@ -14,13 +14,13 @@ exports.init = () => {
     var mailschedule = later.parse.text('at 11:00 am');
     later.setInterval(mail.sendStory,mailschedule);
 
-    mail.sendStory();
+    // mail.sendStory();
 
     // storydata
     var storyDataschedule = later.parse.text('every 15 min');
     later.setInterval(updateStoryData,storyDataschedule); 
 
-    // updateStoryData();
+    updateStoryData();
 };
 
 const updateStoryData = () => {
@@ -28,7 +28,7 @@ const updateStoryData = () => {
       // get all active animals 
       animal.findAll({ where: { active: 1 } } ).then( result => { 
         result.forEach( item => {
-          story.fetchStoryData(item.id,moment().subtract(10,'days'),true);
+          story.fetchStoryData(item.id,moment().subtract(2,'days'),true);
         });
       });
 
