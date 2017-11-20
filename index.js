@@ -23,7 +23,7 @@ var statusController = require('./controllers/status.js');
 var scheduleController = require('./controllers/schedule.js');
 scheduleController.init();
 
-var httpport = 888;
+var httpport = 8888;
 
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');
