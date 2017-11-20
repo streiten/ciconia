@@ -23,7 +23,7 @@ var statusController = require('./controllers/status.js');
 var scheduleController = require('./controllers/schedule.js');
 scheduleController.init();
 
-var httpport = 8080;
+var httpport = 888;
 
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');
@@ -65,11 +65,8 @@ http.listen(httpport, function(){
 
 
 function Ciconia() {
-  
   winston.level = 'debug';
   winston.log('info', moment().format() + ' - Ciconia started...');
-    
 }
-
 
 new Ciconia();
