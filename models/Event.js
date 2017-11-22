@@ -12,15 +12,11 @@ var Schema = mongoose.Schema;
 
 var eventSchema = new Schema({
   timestamp: Date,
-  // username: { type: String, required: true, unique: true },
-  // password: { type: String, required: true },
-  // admin: Boolean,
-  // location: String,
-  // meta: {
-  //   age: Number,
-  //   website: String
-  // },
-  created_at: Date,
+  animalId: Number,
+  lat: Number, 
+  long: Number, 
+  meta: Schema.Types.Mixed,
+  created_at: { type : Date , default: Date.now()},
   updated_at: Date
 });
 
