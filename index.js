@@ -21,6 +21,8 @@ var individualController = require('./controllers/individual.js');
 var storyController = require('./controllers/story.js');
 var statusController = require('./controllers/status.js');
 var scheduleController = require('./controllers/schedule.js');
+var userController = require('./controllers/user.js');
+
 scheduleController.init();
 
 var httpport = 8888;
@@ -40,7 +42,8 @@ app.get('/studies',studiesController.index);
 app.get('/studies/:id',studiesController.studyDetail);
 app.get('/individual/:id',individualController.index);
 app.get('/story/:id/',storyController.index);
-
+app.get('/user/',userController.index);
+app.get('/user/confirm/:hash',userController.confirm);
 
 // Websocket
 io.on('connection', function (socket) {
@@ -67,6 +70,7 @@ http.listen(httpport, function(){
 function Ciconia() {
   winston.level = 'debug';
   winston.log('info', moment().format() + ' - Ciconia started...');
+  userController.create('alex@streiten.org');
 }
 
 new Ciconia();

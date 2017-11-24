@@ -1,0 +1,19 @@
+<mj-section padding-top="30px">
+  <mj-column width="100%">
+    <mj-text >
+      <p>Hi, it's me <strong>{{ animal.name }}</strong>.</p>
+      <p>
+         You can be my designated travel partner for my next migration. But for this adventure to take place <strong>I need you to click on this unnatural button</strong> so i know for sure you want to hear from me every couple of days.Dont't worry, we can seperate at anytime (humans call it unsubscribe).
+      </p>
+    </mj-text>
+    <mj-button href="http://localhost:8888/user/confirm/{{ hash }}">
+      Yes, please take me on that journey!
+    </mj-button>
+    <mj-text >
+      <p>
+        I'll get back to you once I start my travels.<br>
+        Best <strong>{{ animal.name }}</strong>
+      </p>
+    </mj-text>
+  </mj-column>
+</mj-section>

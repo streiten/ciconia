@@ -18,7 +18,7 @@ exports.init = () => {
 
     // mail.sendStory();
  
-    updateEvents();
+    // updateEvents();
 
     // storydata
     var storyDataschedule = later.parse.text('every 30 min');

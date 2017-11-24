@@ -3,12 +3,15 @@ var APPconfig = JSON.parse(fs.readFileSync('./config.json', 'utf8'));
 
 var moment = require('moment');
 var winston = require('winston');
+var mustache = require('mustache');
+const parseJson = require('parse-json');
+const mjml = require('mjml');
+
 const user = require('../models/User.js');
 const animal = require('../models/Animal.js');
 const storyData = require('../models/StoryData.js');
 
 const story = require('./story.js');
-
 
 const nodemailer = require('nodemailer');
 
@@ -25,6 +28,78 @@ let smtpConfig = {
         rejectUnauthorized: false
     }
 };
+
+const send = (fromName,to,subject,body) => {
+   
+   let mailOptions = {
+       'from': '"'+fromName+'" <kwrah@bird.institute>', 
+       'to': to, 
+       'subject': subject, 
+       'html': body
+   };
+
+  let transporter = nodemailer.createTransport(smtpConfig);
+
+  if( 'simulate 'in APPconfig.smtp || APPconfig.smtp.simulate ) {
+    console.log('+++ Mail send simulated +++ ');
+    // console.log(to,subject,body);
+    // console.log('+++ Mail send simulated +++ ');
+
+  } else {
+     transporter.sendMail(mailOptions, (error, info) => {
+       if (error) {
+          console.log(error);
+       }
+      console.log('Message ' + info.messageId + ' sent: ' + info.response);
+    });
+  }
+};
+
+
+exports.sendOptIn = (user) => {
+
+        // assigned animal
+        var data = {
+          "animal" : { "name" : "Kerk" },
+          "hash" : user.hash
+        }
+
+        var htmlbody = exports.generateOptInMailMarkup(data);
+
+        send('Bird Institute',user.email,'Please confirm your subscription',htmlbody);
+
+
+};
+
+
+exports.generateOptInMailMarkup = ( data ) => {
+
+        var tpl = fs.readFileSync('./views/mail/optIn.mjml', 'utf8');
+        markup = mustache.render(tpl, data);
+        
+        var wraptpl = fs.readFileSync('./views/mail/template.mjml', 'utf8');
+        view = { 'body' : markup };
+        mjmlmail = mustache.render(wraptpl, view);
+
+        try {
+          const { html, errors } = mjml.mjml2html(mjmlmail, { beautify: true, minify: false, level: "soft" });
+
+          if (errors) {
+            console.log(errors.map(e => e.formattedMessage).join('\n'))
+          }
+
+          return html;
+
+        } catch(e) {
+          if (e.getMessages) {
+            console.log(e.getMessages());
+          } else {
+            throw e;
+          }
+       }
+
+};
+
 
 
 exports.sendStory = () => {
@@ -45,7 +120,7 @@ exports.sendStory = () => {
             user.find({ active: true }).then(users => {
               // send each one the email
               users.forEach( user => {
-                send(animal.name,user.email,'Krawh! News from {country}',htmlbody);
+                send('Bird Institute',user.email,'Krawh! News from '+ animal.name,htmlbody);
               });
             });
         });
@@ -54,26 +129,4 @@ exports.sendStory = () => {
   });
 };
 
-const send = (fromName,to,subject,body) => {
-   
-   let mailOptions = {
-       'from': '"'+fromName+'" <kwrah@bird.institute>', 
-       'to': to, 
-       'subject': subject, 
-       'html': body
-   };
 
-  let transporter = nodemailer.createTransport(smtpConfig);
-
-  if( 'simulate 'in APPconfig.smtp || APPconfig.smtp.simulate ) {
-    console.log(to,subject,body);
-    console.log('Mail send simulated...');
-  } else {
-     transporter.sendMail(mailOptions, (error, info) => {
-       if (error) {
-          console.log(error);
-       }
-      console.log('Message ' + info.messageId + ' sent: ' + info.response);
-    });
-  }
-};
