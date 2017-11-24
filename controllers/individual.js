@@ -40,7 +40,7 @@ exports.index = (req, res) => {
 
 exports.updateLastEvent = (animalId,socket) => {
 
-  animal.findOne( { 'id': animalId } ).then(animal => {
+  animal.findOne( { 'id': animalId } ).then( animal => {
     // instead use last found in local event table ... TBD
     movebank.getIndividualsEvents(animal.studyId,animal.id,false,false,1).then( data => {
       var events = data.individuals[0].locations.map( event => {
@@ -48,7 +48,10 @@ exports.updateLastEvent = (animalId,socket) => {
         return event;
       });
       events.reverse();
-      animal.update({ 'lastEventAt' : events[0].timestamp });
+      
+      animal.set({ 'lastEventAt' : events[0].timestamp });
+      animal.save();
+
       socket.emit('lastEventUpdate',{ 'id' : animalId, 'lastEvent': events[0] });
 
     });

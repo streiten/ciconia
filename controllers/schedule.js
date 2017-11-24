@@ -52,7 +52,7 @@ const updateEvents = () => {
           var start = moment(lastEvent.timestamp);
           winston.log('info',animal.name + ': Last event in DB @ ' + start.format());
         } else {
-          var start = moment().subtract(1,'month');
+          var start = moment().subtract(1,'day');
           winston.log('info',animal.name + ': No event data found. Starting @ ' + start.format());
         }
 
@@ -64,7 +64,7 @@ const updateEvents = () => {
              // lets upsert each one
              data.individuals[0].locations.forEach( item => {
 
-               var query = { 
+              var query = { 
                 'animalId' :  animal.id , 
                 'timestamp' : item.timestamp
               };
@@ -72,15 +72,18 @@ const updateEvents = () => {
                var obj = { 
                 'animalId' :  animal.id , 
                 'timestamp' : item.timestamp,
-                'meta' : {},
                 'lat' : item.location_lat,
                 'long' : item.location_long
                };
 
+               // removing extracted properties
+               delete item.timestamp;
+               delete item.location_lat;
+               delete item.location_long;
+               obj.meta = item;
 
-               event.findOneAndUpdate(query, obj ,{ 'upsert' : true }).then( item => {
-                  // item null ?
-                  // winston.log('info',animal.name + ': ' + item + ' upserted.');
+               event.findOneAndUpdate(query, obj ,{ 'upsert' : true , 'new': true }).then( item => {
+                  // winston.log('info',animal.name + ': ' + item.timestamp + ' upserted.');
                });
              });
 
