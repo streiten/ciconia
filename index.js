@@ -1,4 +1,5 @@
 var fs = require('fs');
+var querystring = require('querystring');
 var winston = require('winston');
 var moment = require('moment');
 var later = require('later');
@@ -45,7 +46,7 @@ app.get('/story/:id/',storyController.index);
 app.get('/user/',userController.index);
 app.get('/user/confirm/:hash',userController.confirm);
 
-// Websocket
+// Websockets
 io.on('connection', function (socket) {
   
   socket.on('getMapData', function (reqData) {
@@ -60,6 +61,11 @@ io.on('connection', function (socket) {
     individualController.updateLastEvent(animal.id,socket);
   });
 
+  socket.on('createUser', function (data)  {
+    var formData = querystring.parse(data);
+    userController.create(formData.email,socket);
+  });
+
 });
     
 http.listen(httpport, function(){
@@ -70,7 +76,6 @@ http.listen(httpport, function(){
 function Ciconia() {
   winston.level = 'debug';
   winston.log('info', moment().format() + ' - Ciconia started...');
-  userController.create('alex@streiten.org');
 }
 
 new Ciconia();

@@ -60,9 +60,7 @@ block content
         var socket = io.connect();
         
         socket.on('lastEventUpdate', data => {
-          
           $('*[data-animalid="' + data.id + '"]').parent().find('.lastEventDate').html(data.lastEvent.timestamp);
-
         });
 
         $('.update-story-data').on('click',function(e){

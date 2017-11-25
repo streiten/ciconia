@@ -28,40 +28,52 @@ exports.index = (req, res) => {
 
 };
 
-exports.create = (email) => {
+exports.create = (email,socket) => {
 
-    User.findOne({ 'email' : email }).then( user => {
-      // user exists
-      if(user){
-        // return exists
-        winston.log('info', user.email + ' exists! Bye.');
-      // add user
+  User.findOne({ 'email' : email }).then( user => {
+    if(user){
 
-      } else {
-        var newUser = new User();
-        newUser.email = email; 
-        newUser.save();
-        mail.sendOptIn(newUser);
-      }
+      winston.log('info', user.email + ' exists! Bye.');
+      socket.emit('createUserResult',{ "status" : -1 , "msg" : 'Nice try. But you are signed up already' });
+    
+    } else {
 
-    });
-}
+      var newUser = new User();
+      newUser.email = email;
+      newUser.save();
+      
+      mail.sendOptIn(newUser);
+
+      winston.log('info', newUser.email + ' signed up. waiting for cofirmation.');
+      socket.emit('createUserResult',{ "status" : 1 , "msg" : "Awe. Please check your email for confirmation it's really you now."});
+
+    }
+  });
+};
 
 exports.confirm = (req,res) => {
   
-  // add acticated 
   User.findOne({ "hash" : req.params.hash }).then( user => {
     
+    var msg = '';
     if(user) {
-    console.log(user.email,' found and activated.');
-      user.active = true;
-      user.save();
+
+      if(!user.active) {
+        user.active = true;
+        user.save();
+        msg = 'Talk to you in a bit!';
+      } else {
+        msg = "Looks like you've been here before. No worries, talk to you in a bit anyways of course."; 
+      }
+
     } else {
-      console.log('nofind user no more');
+      msg = 'Bye bye.';    
     }
+
+    res.render('optIn', {
+         "msg" : msg
+    });
+
   
   });
-
-  // if no activated give page  already active see later
-
 };

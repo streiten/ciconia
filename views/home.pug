@@ -3,4 +3,26 @@ extends layout
 block content
   h1 Ciconia
   p.lead Travel with birds
-  p Sing up
+
+  form.signup
+    input(type='email', name='email', value='',class="email")
+    input(type='submit', value='Sign up')
+    br
+    span#msg
+
+  script.
+    $(document).ready(function() {
+      
+      var socket = io.connect();
+
+      $('form').on('submit',function(e){
+        e.preventDefault();
+        socket.emit('createUser',$(this).serialize());
+      });
+
+      socket.on('createUserResult', data => {
+        $('#msg').html(data.msg);
+      });    
+    
+    });
+        

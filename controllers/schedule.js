@@ -12,6 +12,8 @@ var movebank = require('../models/Movebank.js');
 
 exports.init = () => {
 
+    later.date.localTime();
+
     // mailing
     var mailschedule = later.parse.text('at 11:00 am');
     later.setInterval(mail.sendStory,mailschedule);
@@ -23,6 +25,23 @@ exports.init = () => {
     // storydata
     var storyDataschedule = later.parse.text('every 30 min');
     later.setInterval(updateEvents,storyDataschedule); 
+
+
+    // var dailySchedule = later.parse.recur().every(5).second().startingOn(0);
+    // later.setInterval(function (){
+    //   console.log(moment());
+    // },weeklySchedule);
+
+    // var weeklySchedule = later.parse.recur().every(5).second().startingOn('20:10');
+
+    // UCT!!! 
+    var weeklySchedule = later.parse.text('at 18:25');
+    
+    console.log(later.schedule(weeklySchedule).next(1));
+
+    later.setInterval(function (){
+      console.log(moment());
+    },weeklySchedule);
 
     // updateStoryData();
 };
