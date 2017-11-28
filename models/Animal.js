@@ -17,6 +17,8 @@ var animalSchema = new Schema({
   featureDateStart: Date,
   featureDateEnd: Date,
   featureRange: Number,
+  migrationDateStart: Date,
+  migrationDateEnd: Date,
   createdAt: { type: Date, default: Date.now },
   updatedAt: Date
 });
