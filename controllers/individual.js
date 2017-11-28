@@ -72,7 +72,7 @@ exports.getMapData = (reqData,socket) => {
     if(!reqData.end){
       reqData.end = animal.featureDateEnd;
     }
-s
+
     movebank.getIndividualsEvents(reqData.ids.sid,reqData.ids.id,moment(reqData.start),moment(reqData.end)).then( data => {
 
       var events = data.individuals[0].locations.map( event => {
