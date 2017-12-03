@@ -109,7 +109,7 @@ exports.sendStory = () => {
       // each animal 
       animals.forEach( animal => {
         // find latest storydata for animal 
-        storyData.findOne({where : { individualId : animal.id }, order:  [ [ 'timestamp', 'DESC' ]] }).then( lastStory => {
+        storyData.findOne({ animalId : animal.id }).sort({ 'timestamp': -1 }).then( lastStory => {
           // generat email markup
 
           var ts = moment(lastStory.timestamp).toISOString();

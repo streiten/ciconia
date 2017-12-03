@@ -1,5 +1,4 @@
 const fs = require('fs');
-const Sequelize = require('sequelize');
 const APPconfig = JSON.parse(fs.readFileSync('./config.json', 'utf8'));
 
 var mongoose = require('mongoose');

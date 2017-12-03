@@ -1,21 +1,19 @@
 const fs = require('fs');
-const Sequelize = require('sequelize');
 const APPconfig = JSON.parse(fs.readFileSync('./config.json', 'utf8'));
+var mongoose = require('mongoose');
+mongoose.Promise = global.Promise;
+mongoose.connect(APPconfig.mongodb.host,{  useMongoClient: true });
 
-const sequelize = new Sequelize(APPconfig.db.db, APPconfig.db.user, APPconfig.db.pass, {
-
-  // disable logging; default: console.log
-  logging: false
-
+var Schema = mongoose.Schema;
+var storyDataSchema = new Schema({
+  timestamp: Date,
+  animalId: Number,
+  eventId: { type: Schema.Types.ObjectId, ref: 'Event' },
+  type: String,
+  json: Schema.Types.Mixed,
+  created_at: { type : Date , default: Date.now()},
+  updated_at: Date
 });
-
-const StoryData = sequelize.define('storydata', {
-  id: { type: Sequelize.INTEGER, primaryKey: true , autoIncrement: true }, 
-  timestamp: Sequelize.DATE,
-  individualId: Sequelize.INTEGER,
-  type: Sequelize.STRING,
-  json: Sequelize.TEXT
-});
-
+var StoryData = mongoose.model('StoryData', storyDataSchema);
 
 module.exports = StoryData;

@@ -21,18 +21,11 @@ exports.index = (req, res) => {
 
   animal.findOne( { 'id': req.params.id }).then(animal => {
 
-  var start = moment().subtract(30, 'days');
-  var end = moment();  
-
-  movebank.getIndividualsEvents(animal.studyId,animal.id,start,end).then( data => {
-        
-      res.render('individual', {
-        title: 'Individual ' + animal.id + ': ' + data.individuals[0].individual_local_identifier,
-        ids:  JSON.stringify({ id : animal.id, sid : animal.studyId }),
-        featureRange: animal.featureRange
-      });
-
-    });
+  res.render('individual', {
+    title: 'Individual ' + animal.id + ': ' + animal.name ,
+    ids:  JSON.stringify({ id : animal.id, sid : animal.studyId }),
+    featureRange: animal.featureRange
+  });
   
   });
 
@@ -43,10 +36,7 @@ exports.updateLastEvent = (animalId,socket) => {
   animal.findOne( { 'id': animalId } ).then( animal => {
     // instead use last found in local event table ... TBD
     movebank.getIndividualsEvents(animal.studyId,animal.id,false,false,1).then( data => {
-      var events = data.individuals[0].locations.map( event => {
-        event.timestamp = moment(event.timestamp).format("llll");
-        return event;
-      });
+      var events = data.individuals[0].locations;
       events.reverse();
       
       animal.set({ 'lastEventAt' : events[0].timestamp });
@@ -64,7 +54,7 @@ exports.updateLastEvent = (animalId,socket) => {
 exports.getMapData = (reqData,socket) => {
 
   animal.findOne({ 'id': reqData.ids.id } ).then(animal => {
-    
+
     if(!reqData.start){
       reqData.start = animal.featureDateStart;
     }
@@ -73,12 +63,17 @@ exports.getMapData = (reqData,socket) => {
       reqData.end = animal.featureDateEnd;
     }
 
+
     movebank.getIndividualsEvents(reqData.ids.sid,reqData.ids.id,moment(reqData.start),moment(reqData.end)).then( data => {
 
-      var events = data.individuals[0].locations.map( event => {
-        event.timestamp = moment(event.timestamp).format("llll");
-        return event;
-      });
+      var events = data.individuals[0].locations; // .map( event => {
+        
+      //   //console.log(event.timestamp);
+      //   event.timestamp = moment(event.timestamp).format("llll");
+      //   //console.log(moment(event.timestamp).format("llll"));
+      //   return event;
+      // });
+
       events.reverse();
       socket.emit('mapData',geoJSONify(events));
 

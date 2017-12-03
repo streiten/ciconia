@@ -10,21 +10,12 @@ mongoose.connect(APPconfig.mongodb.host,{  useMongoClient: true });
 
 var Schema = mongoose.Schema;
 
-var eventSchema = new Schema({
-  timestamp: Date,
-  animalId: Number,
-  lat: Number, 
-  long: Number, 
-  meta: Schema.Types.Mixed,
+var mqSchema = new Schema({
+  message: Schema.Types.Mixed,
   created_at: { type : Date , default: Date.now()},
   updated_at: Date
 });
 
-// eventSchema.pre('update', function() {
-//   this.update({},{ $set: { updated_at: new Date() } });
-//   console.log(this._id);
-// });
+var Mq = mongoose.model('mq',mqSchema);
 
-var Event = mongoose.model('Event', eventSchema);
-
-module.exports = Event;
+module.exports = Mq;

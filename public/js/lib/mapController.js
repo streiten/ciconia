@@ -7,7 +7,6 @@
   function mapController(socket){
 
     this.socket = socket;
-
     this.socket.emit('getMapData', { 'ids':  ids });
 
     this.socket.on('mapData', data => {
@@ -26,8 +25,8 @@
 
       // console.log(data);
       this.updateEventsMap(data);
-      console.log('First Event: ',data.features[0].properties.timestamp); 
-      console.log('Last Event: ',data.features[data.features.length-1].properties.timestamp); 
+      console.log('First Event: ',moment(data.features[0].properties.timestamp).format('llll')); 
+      console.log('Last Event: ',moment(data.features[data.features.length-1].properties.timestamp).format('llll')); 
 
     });
 

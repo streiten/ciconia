@@ -1,3 +1,8 @@
+process.on('unhandledRejection', (reason, p) => {
+  console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
+  // application specific logging, throwing an error, or other logic here
+});
+
 var fs = require('fs');
 var querystring = require('querystring');
 var winston = require('winston');

@@ -3,6 +3,7 @@ var winston = require('winston');
 var moment = require('moment');
 var mustache = require('mustache');
 const parseJson = require('parse-json');
+const request = require('request-promise-native');
 
 var MapboxClient = require('mapbox');
 var geonames = require('geonames.js');
@@ -11,6 +12,7 @@ var movebank = require('../models/Movebank.js');
 
 const animal = require('../models/Animal.js');
 var storyData = require('../models/StoryData.js');
+var mqModel = require('../models/MessageQue.js');
 
 const mjml = require('mjml');
 
@@ -29,7 +31,7 @@ exports.index = (req, res) => {
   animal.findOne({ 'id': req.params.id }).then(animal => {
 
     // find last timestamp for this animals storydata available
-    storyData.findOne({where : { 'individualId' : animal.id }, order:  [ [ 'timestamp', 'DESC' ]] }).then( lastStory => {
+    storyData.findOne( { 'animalId' : animal.id }).sort({'timestamp': -1 }).then( lastStory => {
       
       exports.generateStoryMarkup(moment(lastStory.timestamp).toISOString(), animal, 'Alex' ).then( data => {
        res.render('story', {
@@ -43,12 +45,13 @@ exports.index = (req, res) => {
 
 };
 
+
 exports.fetchStoryData = (animalID,start) => {
 
   animal.findOne({ 'id': animalID }).then( animal => {
 
     // find timestamp of last story data in DB and use it as start date for range
-    storyData.findOne({where : { 'individualId' : animalID }, order:  [ [ 'timestamp', 'DESC' ]] }).then( result => {
+    storyData.findOne({ 'animalId' : animal.id }).sort({'timestamp': -1 }).then( result => {
       
       if(result) {
        winston.log('info',animal.name + ': Last story data @ ' + result.timestamp.toISOString());
@@ -93,7 +96,7 @@ exports.fetchStoryData = (animalID,start) => {
 exports.generateStoryMarkup = ( timestamp , animal , username ) => {
   
   const queryStoryViewData = ( timestamp , animalId ) => {
-      return storyData.findOne( { where: { "timestamp" : timestamp, "individualId":animalId , "type" : "view" } }).then( result => {
+      return storyData.findOne( { "timestamp" : timestamp, "animalId":animalId , "type" : "view" } ).then( result => {
           
           if(result) {
               var url = parseJson(result.json);
@@ -110,7 +113,7 @@ exports.generateStoryMarkup = ( timestamp , animal , username ) => {
 
   const queryStoryWHSData = ( timestamp , animalId ) => {
       
-      return storyData.findOne( { where: { "timestamp" : timestamp, "individualId":animalId , "type" : "whs" } }).then( result => {
+      return storyData.findOne( { "timestamp" : timestamp, "animalId":animalId , "type" : "whs" } ).then( result => {
         if(result) {
 
             var data = parseJson(result.json);
@@ -133,7 +136,7 @@ exports.generateStoryMarkup = ( timestamp , animal , username ) => {
 
   const queryStoryWikipediaData = ( timestamp , animalId ) => {
       
-      return storyData.findAll( { where: { "timestamp" : timestamp, "individualId":animalId ,  "type" : "wikipedia" } }).then( result => {
+      return storyData.find( { "timestamp" : timestamp, "animalId":animalId ,  "type" : "wikipedia" } ).then( result => {
           if(result) {
               
               var view = { wikis : []};
@@ -173,7 +176,7 @@ exports.generateStoryMarkup = ( timestamp , animal , username ) => {
 
   const queryStoryWeatherData = ( timestamp , animalId ) => {
       
-      return storyData.findOne( { where: { "timestamp" : timestamp, "individualId":animalId , "type" : "weather" } }).then( result => {
+      return storyData.findOne( { "timestamp" : timestamp, "animalId":animalId , "type" : "weather" } ).then( result => {
           if(result) {
             return {"key" : "weather" , "value" : parseJson(result.json) };
           } else return { "key" : "weather" , "value" : null };
@@ -182,7 +185,7 @@ exports.generateStoryMarkup = ( timestamp , animal , username ) => {
   };
 
   const queryStoryStatsData = ( timestamp , animalId ) => {
-      return storyData.findOne( { where: { "timestamp" : timestamp, "individualId":animalId ,  "type" : "stat" } }).then( result => {
+      return storyData.findOne( { "timestamp" : timestamp, "animalId":animalId ,  "type" : "stat" } ).then( result => {
           if(result) {
             return {"key" : "stat" , "value" : parseJson(result.json) };
           } else return { "key" : "stat" , "value" : null };
@@ -208,7 +211,6 @@ exports.generateStoryMarkup = ( timestamp , animal , username ) => {
 
         
         var markup = '';
-
         var introview = {};
 
         introview.individual = animal.name;
@@ -255,20 +257,19 @@ exports.generateStoryMarkup = ( timestamp , animal , username ) => {
         try {
           const { html, errors } = mjml.mjml2html(mjmlmail, { beautify: true, minify: false, level: "soft" });
 
-        if (errors) {
-          console.log(errors.map(e => e.formattedMessage).join('\n'))
-        }
+          if (errors) {
+            console.log(errors.map(e => e.formattedMessage).join('\n'))
+          }
 
-        return html;
+          return html;
 
         } catch(e) {
           if (e.getMessages) {
-          console.log(e.getMessages());
-          } else {
-            throw e;
-          }
+            console.log(e.getMessages());
+            } else {
+              throw e;
+            }
         }
-
        });
 };
 
@@ -279,7 +280,7 @@ const fetchStoryData = ( event,animal ) => {
       
       data = JSON.stringify(data);
       storyData
-        .findOrCreate({where: {timestamp: event.timestamp , 'type' : 'view', 'individualId' : animal.id }, defaults: { 'json': data }})
+        .findOneAndUpdate({"timestamp": event.timestamp , 'type' : 'view', 'animalId' : animal.id }, { '$setOnInsert' : { 'eventId' : event._id, 'json': data }},{ 'upsert':true })
         .catch((error) => {
           console.log(error);
         });
@@ -289,7 +290,7 @@ const fetchStoryData = ( event,animal ) => {
       if(data) { 
         data = JSON.stringify(data);
         storyData
-          .findOrCreate({where: {timestamp: event.timestamp , 'type' : 'weather', 'individualId' : animal.id }, defaults: { 'json' : data }})
+          .findOneAndUpdate({"timestamp": event.timestamp , 'type' : 'weather', 'animalId' : animal.id }, { '$setOnInsert' : {'eventId' : event._id, 'json' : data }},{ 'upsert':true })
           .catch((error) => {
             console.log(error);
           });
@@ -300,7 +301,7 @@ const fetchStoryData = ( event,animal ) => {
       if(data) { 
         data = JSON.stringify(data); 
         storyData
-          .findOrCreate({where: {timestamp: event.timestamp , 'type' : 'wikipedia', 'individualId' : animal.id }, defaults: { 'json' : data }})
+          .findOneAndUpdate({"timestamp": event.timestamp , 'type' : 'wikipedia', 'animalId' : animal.id }, { '$setOnInsert' : {'eventId' : event._id, 'json' : data }},{ 'upsert':true })
           .catch((error) => {
             console.log(error);
           });
@@ -311,7 +312,7 @@ const fetchStoryData = ( event,animal ) => {
       if(data[0]) { 
         data = JSON.stringify(data[0]);
         storyData
-          .findOrCreate({where: {timestamp: event.timestamp , 'type' : 'whs', 'individualId' : animal.id }, defaults: { 'json' : data }})
+          .findOneAndUpdate({"timestamp": event.timestamp , 'type' : 'whs', 'animalId' : animal.id }, { '$setOnInsert' : {'eventId' : event._id, 'json' : data }},{ 'upsert':true })
           .catch((error) => {
             console.log(error);
           });
@@ -322,7 +323,91 @@ const fetchStoryData = ( event,animal ) => {
       if(data) { 
         data = JSON.stringify(data);
         storyData
-          .findOrCreate({where: {timestamp: event.timestamp , 'type' : 'stat', 'individualId' : animal.id }, defaults: { 'json' : data }})
+          .findOneAndUpdate({"timestamp": event.timestamp , 'type' : 'stat', 'animalId' : animal.id }, { '$setOnInsert' : {'eventId' : event._id, 'json' : data }},{ 'upsert':true })
+          .catch((error) => {
+            console.log(error);
+          });
+      }
+    });
+};
+
+// get all data from external sources (and store in db locally)
+exports.fetchStoryDataForEvent = ( event ) => {
+    
+    // console.log('Fetching for' + event);
+    var animalDir = 'data/' + event.animalId;
+    
+    if (!fs.existsSync(animalDir)){
+        fs.mkdirSync(animalDir);
+    }
+    
+    fetchViewData(event.lat,event.long).then( data => {
+      
+      // now save the file to disk
+      var options = { 
+          "url" : data.imgurl,
+          "encoding":"binary"
+      };
+
+      data.localPath = 'data/'+event.animalId+'/'+event.animalId +'-'+ moment(event.timestamp).valueOf() + '.jpg';
+
+      request(options).then( body  => {
+        var writeTo = 'data/'+event.animalId+'/'+event.animalId +'-'+ moment(event.timestamp).valueOf() + '.jpg';
+        
+        fs.writeFile(writeTo, body, 'binary', function (err) {
+          if(err) {
+            winston.log('error',err);
+          }
+        });
+      }).catch(err =>  {
+        winston.log('error',err);
+      });
+      data = JSON.stringify(data);
+      storyData
+        .findOneAndUpdate({"timestamp": event.timestamp , 'type' : 'view', 'animalId' : event.animalId }, {'eventId' : event._id, '$setOnInsert' : { 'json': data }},{ 'upsert':true })
+        .catch((error) => {
+          winston.log('error',error);
+        });
+    });
+    
+    fetchWeatherData(event.lat,event.long).then( data => {
+      if(data) { 
+        data = JSON.stringify(data);
+        storyData
+          .findOneAndUpdate({"timestamp": event.timestamp , 'type' : 'weather', 'animalId' : event.animalId }, {'eventId' : event._id, '$setOnInsert' : { 'json' : data }},{ 'upsert':true })
+          .catch((error) => {
+            console.log(error);
+          });
+      };
+    });
+    
+    fetchWikipediaData(event.lat,event.long,1).then( data => {
+      if(data) { 
+        data = JSON.stringify(data); 
+        storyData
+          .findOneAndUpdate({"timestamp": event.timestamp , 'type' : 'wikipedia', 'animalId' : event.animalId }, {'eventId' : event._id, '$setOnInsert' : { 'json' : data }},{ 'upsert':true })
+          .catch((error) => {
+            console.log(error);
+          });
+      }
+    });
+    
+    fetchWHSData(event.lat,event.long,1).then( data => {
+      if(data[0]) { 
+        data = JSON.stringify(data[0]);
+        storyData
+          .findOneAndUpdate({"timestamp": event.timestamp , 'type' : 'whs', 'animalId' : event.animalId }, { '$setOnInsert' : {'eventId' : event._id, 'json' : data }},{ 'upsert':true })
+          .catch((error) => {
+            console.log(error);
+          });
+      }
+    });
+
+    fetchStatData(event).then( data => {
+      if(data) { 
+        data = JSON.stringify(data);
+        storyData
+          .findOneAndUpdate({"timestamp": event.timestamp , 'type' : 'stat', 'animalId' : event.animalId }, { '$setOnInsert' : {'eventId' : event._id, 'json' : data }},{ 'upsert':true })
           .catch((error) => {
             console.log(error);
           });
@@ -334,10 +419,10 @@ const fetchStoryData = ( event,animal ) => {
 const fetchViewData = function(lat,long) {
   
   var mbc = new MapboxClient(APPconfig.mapbox.accesstoken);
-  var satteliteImageUrl = mbc.getStaticURL('streitenorg', APPconfig.mapbox.mapstyle, 1280, 1280, {
+  var satteliteImageUrl = mbc.getStaticURL('streitenorg', APPconfig.mapbox.mapstyle, 1280, 720, {
     longitude: long,
     latitude: lat,
-    zoom: 16
+    zoom: 15
   }, {
     attribution: false,
     retina: true,
@@ -544,6 +629,18 @@ const fetchStatData = function (event) {
 
         return statobj;
       
+      });
+
+};
+
+
+const updateStoryData = () => {
+
+      // get all active animals 
+      animal.find({ "active": true } ).then( result => { 
+        result.forEach( item => {
+          story.fetchStoryData(item.id,moment().subtract(3,'hours'),true);
+        });
       });
 
 };

@@ -11,6 +11,8 @@ block content
           tr
             th Id
             th Name
+            th Start
+            th End
             th Last Event
             th Action
           
@@ -19,6 +21,8 @@ block content
               tr
                 td= individual.id
                 td= individual.name
+                td= individual.featureDateStart
+                td= individual.featureDateEnd
                 td
                   span.lastEventDate= individual.lastEventAt
                   | 
@@ -28,7 +32,7 @@ block content
                 td
                   a(href='/individual/' + individual.id ) View Details <br>
                   a(href='/story/' + individual.id ).generate-content View current story <br>
-                  a(href='#' data-animalid=individual.id).update-story-data Update story data <br>
+                  //- a(href='#' data-animalid=individual.id).update-story-data Update story data <br>
 
         h3 Inactive
         table.table.table-striped.table-hover
