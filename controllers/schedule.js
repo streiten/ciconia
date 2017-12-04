@@ -20,10 +20,7 @@ exports.init = () => {
     var mailschedule = later.parse.text('at 11:00 am');
     // var mailschedule = later.parse.text('every 10 seconds');   
     later.setInterval(mailingTime,mailschedule);
-    mailingTime();
     
-    // event.updateEvents();
-
     // checking for new events
     var eventUpdateSchedule = later.parse.text('every 30 min');
     later.setInterval(event.updateEvents,eventUpdateSchedule); 
