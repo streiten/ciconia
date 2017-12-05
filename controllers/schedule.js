@@ -22,18 +22,18 @@ exports.init = () => {
     later.setInterval(mailingTime,mailschedule);
     
     // checking for new events
+    // event.updateEvents();
     var eventUpdateSchedule = later.parse.text('every 30 min');
     later.setInterval(event.updateEvents,eventUpdateSchedule); 
 
     // message que
     var mqSchedule = later.parse.text('every 2 min');
     later.setInterval(mqHandler,mqSchedule); 
-    mqHandler();
+    // mqHandler();
 };
 
 const mqHandler = () => {
 
-  winston.log('info','Working the message que...');
   // get items from que
   mqModel.find().limit(10).then( messages => {
     

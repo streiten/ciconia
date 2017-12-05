@@ -11,8 +11,9 @@ var WHSites = require('../libs/whsites.js');
 var movebank = require('../models/Movebank.js');
 
 const animal = require('../models/Animal.js');
+const eventModel = require('../models/Event.js');
+
 var storyData = require('../models/StoryData.js');
-var mqModel = require('../models/MessageQue.js');
 
 const mjml = require('mjml');
 
@@ -28,19 +29,56 @@ const APPconfig = JSON.parse(fs.readFileSync('./config.json', 'utf8'));
 
 exports.index = (req, res) => {
   
+
   animal.findOne({ 'id': req.params.id }).then(animal => {
 
-    // find last timestamp for this animals storydata available
-    storyData.findOne( { 'animalId' : animal.id }).sort({'timestamp': -1 }).then( lastStory => {
+    // get feature range startdate
+    var eventdate = moment(animal.featureDateStart);
+    var dayoffset = 0;
+    // day offset ? -> clac the event to display
+
+    if(req.params.day) {
+      dayoffset = req.params.day;
+      eventdate.add(dayoffset,'day');
+    }
+
+    //now find the closest event 
+    eventModel.findOne( { 'animalId' : animal.id , 'timestamp': { $gte : eventdate }}).sort({"timestamp" : 1}).then( closestEvent => {
       
-      exports.generateStoryMarkup(moment(lastStory.timestamp).toISOString(), animal, 'Alex' ).then( data => {
-       res.render('story', {
-          body: data
+      // if there is one, check if there is storyDate else getit
+      if(closestEvent) {
+        
+        // find last timestamp for this animals storydata available
+        storyData.findOne( { 'eventId' : closestEvent._id } ).then( story => {
+          if(story) {
+            
+            exports.generateStoryMarkup(moment(story.timestamp).toISOString(), animal, 'Alex' ).then( data => {
+             res.render('story', {
+                'body': data,
+                'state': eventdate.format('ll') + ' - Event: ' + moment(closestEvent.timestamp).format('llll') + '_id: ' + closestEvent._id ,
+                'prevStoryUrl' : '/story/' + animal.id + '/' + (dayoffset*1-1) ,
+                'nextStoryUrl' : '/story/' + animal.id + '/' + (dayoffset*1+1) 
+              });
+            });
+          
+          } else {
+
+            winston.log('info','No Story found. Bummer. But fetching now...');
+
+            exports.fetchStoryDataForEvent(closestEvent).then( all => {
+              console.log('... fetch done. reload/redirect now!');
+              res.redirect(req.originalUrl);
+            });
+          }
+
         });
-      });
+
+      } else {
+        winston.log('info','No event found for storybuilding.');
+      }
 
     });
-
+    
   });
 
 };
@@ -340,8 +378,8 @@ exports.fetchStoryDataForEvent = ( event ) => {
     if (!fs.existsSync(animalDir)){
         fs.mkdirSync(animalDir);
     }
-    
-    fetchViewData(event.lat,event.long).then( data => {
+
+    var ViewDataPromise = fetchViewData(event.lat,event.long).then( data => {
       
       // now save the file to disk
       var options = { 
@@ -351,7 +389,7 @@ exports.fetchStoryDataForEvent = ( event ) => {
 
       data.localPath = 'data/'+event.animalId+'/'+event.animalId +'-'+ moment(event.timestamp).valueOf() + '.jpg';
 
-      request(options).then( body  => {
+      var mapImageSave = request(options).then( body  => {
         var writeTo = 'data/'+event.animalId+'/'+event.animalId +'-'+ moment(event.timestamp).valueOf() + '.jpg';
         
         fs.writeFile(writeTo, body, 'binary', function (err) {
@@ -362,18 +400,27 @@ exports.fetchStoryDataForEvent = ( event ) => {
       }).catch(err =>  {
         winston.log('error',err);
       });
+      
       data = JSON.stringify(data);
-      storyData
+      
+
+      var writeDBPromise = storyData
         .findOneAndUpdate({"timestamp": event.timestamp , 'type' : 'view', 'animalId' : event.animalId }, {'eventId' : event._id, '$setOnInsert' : { 'json': data }},{ 'upsert':true })
         .catch((error) => {
           winston.log('error',error);
         });
+
+      return Promise.all([
+          mapImageSave,
+          writeDBPromise
+        ]);
+        
     });
     
-    fetchWeatherData(event.lat,event.long).then( data => {
+    var WeatherDataPromise = fetchWeatherData(event.lat,event.long).then( data => {
       if(data) { 
         data = JSON.stringify(data);
-        storyData
+        return storyData
           .findOneAndUpdate({"timestamp": event.timestamp , 'type' : 'weather', 'animalId' : event.animalId }, {'eventId' : event._id, '$setOnInsert' : { 'json' : data }},{ 'upsert':true })
           .catch((error) => {
             console.log(error);
@@ -381,10 +428,10 @@ exports.fetchStoryDataForEvent = ( event ) => {
       };
     });
     
-    fetchWikipediaData(event.lat,event.long,1).then( data => {
+    var WikipediaDataPromise = fetchWikipediaData(event.lat,event.long,1).then( data => {
       if(data) { 
         data = JSON.stringify(data); 
-        storyData
+        return storyData
           .findOneAndUpdate({"timestamp": event.timestamp , 'type' : 'wikipedia', 'animalId' : event.animalId }, {'eventId' : event._id, '$setOnInsert' : { 'json' : data }},{ 'upsert':true })
           .catch((error) => {
             console.log(error);
@@ -392,10 +439,10 @@ exports.fetchStoryDataForEvent = ( event ) => {
       }
     });
     
-    fetchWHSData(event.lat,event.long,1).then( data => {
+    var WHSDataPromise = fetchWHSData(event.lat,event.long,1).then( data => {
       if(data[0]) { 
         data = JSON.stringify(data[0]);
-        storyData
+        return storyData
           .findOneAndUpdate({"timestamp": event.timestamp , 'type' : 'whs', 'animalId' : event.animalId }, { '$setOnInsert' : {'eventId' : event._id, 'json' : data }},{ 'upsert':true })
           .catch((error) => {
             console.log(error);
@@ -403,16 +450,27 @@ exports.fetchStoryDataForEvent = ( event ) => {
       }
     });
 
-    fetchStatData(event).then( data => {
+    var StatDataPromise = fetchStatData(event).then( data => {
       if(data) { 
         data = JSON.stringify(data);
-        storyData
+        return storyData
           .findOneAndUpdate({"timestamp": event.timestamp , 'type' : 'stat', 'animalId' : event.animalId }, { '$setOnInsert' : {'eventId' : event._id, 'json' : data }},{ 'upsert':true })
           .catch((error) => {
             console.log(error);
           });
       }
     });
+
+
+    // return Promise all fetches
+    return Promise.all([
+        StatDataPromise,
+        WHSDataPromise,
+        WikipediaDataPromise,
+        WeatherDataPromise,
+        ViewDataPromise
+      ]);
+
 };
 
 

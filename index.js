@@ -47,7 +47,10 @@ app.get('/status',statusController.index);
 app.get('/studies',studiesController.index);
 app.get('/studies/:id',studiesController.studyDetail);
 app.get('/individual/:id',individualController.index);
+
+app.get('/story/:id/:day',storyController.index);
 app.get('/story/:id/',storyController.index);
+
 app.get('/user/',userController.index);
 app.get('/user/confirm/:hash',userController.confirm);
 

@@ -8946,3 +8946,8 @@ textarea {
 #map-individual {
   width: 100%;
   height: 50vh; }
+
+iframe {
+  width: 100%;
+  height: 100vh;
+  border: 0; }

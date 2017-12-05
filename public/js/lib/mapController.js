@@ -35,8 +35,8 @@
 
     this.map = new mapboxgl.Map({
         container: 'map-individual',
-        style: 'mapbox://styles/mapbox/outdoors-v10',
-        //style: 'mapbox://styles/mapbox/satellite-v9',
+        // style: 'mapbox://styles/mapbox/outdoors-v10',
+        style: 'mapbox://styles/mapbox/satellite-v9',
 
     });
     this.map.addControl(new mapboxgl.NavigationControl());
