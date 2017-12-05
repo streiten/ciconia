@@ -1,5 +1,5 @@
 var fs = require('fs');
-var winston = require('winston');
+var logger = require('./logger.js');
 var moment = require('moment');
 
 var movebankModel = require('../models/Movebank.js');
@@ -11,7 +11,7 @@ exports.eventModel = eventModel;
 
 exports.updateEvents = () => {
 
-  winston.log('info','Updating Events...');
+  logger.debug('Updating Events...');
   animalModel.find({ "active": true } ).then( result => { 
 
     result.forEach( animal => {
@@ -21,10 +21,10 @@ exports.updateEvents = () => {
         if(lastEvent) {
           // get new ones since lastEvent
           var start = moment(lastEvent.timestamp);
-          winston.log('info',animal.name + ': Last event in DB @ ' + start.format());
+          logger.log('debug',animal.name + ': Last event in DB @ ' + start.format());
         } else {
           var start = moment().subtract(2,'day');
-          winston.log('info',animal.name + ': No event data found. Starting @ ' + start.format());
+          logger.log('debug',animal.name + ': No event data found. Starting @ ' + start.format());
         }
         
         // console.log(animal.studyId,animal.id,start.add(1,'seconds'),moment());
@@ -34,7 +34,7 @@ exports.updateEvents = () => {
           if(data.individuals[0]) {
             processAndInsertEvents(animal,data.individuals[0]);
           } else {
-            winston.log('info',animal.name + ': No new events in Movebank.');
+            logger.log('debug',animal.name + ': No new events in Movebank.');
           }
         });
       
@@ -53,7 +53,7 @@ exports.fetchEvents = (animalId,start,end) => {
       if(data.individuals[0]) {
         processAndInsertEvents(animal,data.individuals[0]);
       } else {
-        winston.log('info',animal.name + ': No events found in Movebank.');
+        logger.log('debug',animal.name + ': No events found in Movebank.');
       }
     });
   
@@ -62,7 +62,7 @@ exports.fetchEvents = (animalId,start,end) => {
 
 const processAndInsertEvents = (animal,events) => {
 
-  winston.log('info',animal.name + ': ' + events.locations.length + ' events found in Movebank.');
+  logger.info(animal.id + ' - ' + animal.name + ': ' + events.locations.length + ' new events found in Movebank. Upserting now.');
   
   // map data for db
   var eventsProcessed = events.locations.map( item => {
@@ -120,7 +120,7 @@ const processAndInsertEvents = (animal,events) => {
   function bulkInsertEvents(bulkOps) {
     eventModel.bulkWrite(bulkOps).then( result => {
         
-        winston.log('info','Mongo bulk result:' + ' inserted:' + result.nInserted + ' upserted:' +result.nUpserted+ ' ,matched:' +result.nMatched+ ' modified:' +result.nModified+ ' removed:' +result.nRemoved);
+        logger.log('debug','Mongo bulk result:' + ' inserted:' + result.nInserted + ' upserted:' +result.nUpserted+ ' ,matched:' +result.nMatched+ ' modified:' +result.nModified+ ' removed:' +result.nRemoved);
 
         // putting upserted ids on the messageque for story fetching
         var mqOps = [];

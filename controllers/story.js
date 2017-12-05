@@ -293,9 +293,9 @@ exports.generateStoryMarkup = ( timestamp , animal , username ) => {
         mjmlmail = mustache.render(wraptpl, view);
 
         try {
-          const { html, errors } = mjml.mjml2html(mjmlmail, { beautify: true, minify: false, level: "soft" });
+          const { html, errors } = mjml.mjml2html( mjmlmail, { beautify: true, minify: false, level: "soft" } );
 
-          if (errors) {
+          if(errors.length > 0) {
             console.log(errors.map(e => e.formattedMessage).join('\n'))
           }
 
@@ -303,7 +303,7 @@ exports.generateStoryMarkup = ( timestamp , animal , username ) => {
 
         } catch(e) {
           if (e.getMessages) {
-            console.log(e.getMessages());
+              console.log(e.getMessages());
             } else {
               throw e;
             }

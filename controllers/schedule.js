@@ -1,7 +1,8 @@
 var fs = require('fs');
-var winston = require('winston');
 var moment = require('moment');
 var later = require('later');
+
+var logger = require('./logger.js');
 
 const mail = require('./mail.js');
 const story = require('./story.js');
@@ -22,31 +23,30 @@ exports.init = () => {
     later.setInterval(mailingTime,mailschedule);
     
     // checking for new events
-    // event.updateEvents();
+    event.updateEvents();
     var eventUpdateSchedule = later.parse.text('every 30 min');
     later.setInterval(event.updateEvents,eventUpdateSchedule); 
 
     // message que
     var mqSchedule = later.parse.text('every 2 min');
     later.setInterval(mqHandler,mqSchedule); 
-    // mqHandler();
+
 };
 
 const mqHandler = () => {
 
   // get items from que
   mqModel.find().limit(10).then( messages => {
-    
-    messages.forEach( msg => {
-       
-       // switch case type later on
-       event.eventModel.findOne({'_id': msg.message.fetchStory.eventId}).then( event => {
-          story.fetchStoryDataForEvent(event);
-       });
-
-       msg.remove();
-
-    });
+    if(messages.length > 0) {
+      logger.info('Work on the mq to be done:' + messages.length);
+      messages.forEach( msg => {
+         // switch case type later on
+         event.eventModel.findOne({'_id': msg.message.fetchStory.eventId}).then( event => {
+            story.fetchStoryDataForEvent(event);
+         });
+         msg.remove();
+      });
+    }
   });
 
 };
