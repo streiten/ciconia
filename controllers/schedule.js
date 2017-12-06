@@ -24,7 +24,7 @@ exports.init = () => {
     
     // checking for new events
     event.updateEvents();
-    var eventUpdateSchedule = later.parse.text('every 30 min');
+    var eventUpdateSchedule = later.parse.text('every 2 hour');
     later.setInterval(event.updateEvents,eventUpdateSchedule); 
 
     // message que

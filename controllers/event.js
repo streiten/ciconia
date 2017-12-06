@@ -21,10 +21,10 @@ exports.updateEvents = () => {
         if(lastEvent) {
           // get new ones since lastEvent
           var start = moment(lastEvent.timestamp);
-          logger.log('debug',animal.name + ': Last event in DB @ ' + start.format());
+          // logger.log('debug',animal.name + ': Last event in DB @ ' + start.format());
         } else {
           var start = moment().subtract(2,'day');
-          logger.log('debug',animal.name + ': No event data found. Starting @ ' + start.format());
+          // logger.log('debug',animal.name + ': No event data found. Starting @ ' + start.format());
         }
         
         // console.log(animal.studyId,animal.id,start.add(1,'seconds'),moment());
@@ -34,7 +34,7 @@ exports.updateEvents = () => {
           if(data.individuals[0]) {
             processAndInsertEvents(animal,data.individuals[0]);
           } else {
-            logger.log('debug',animal.name + ': No new events in Movebank.');
+            // logger.log('debug',animal.name + ': No new events in Movebank.');
           }
         });
       
@@ -53,7 +53,7 @@ exports.fetchEvents = (animalId,start,end) => {
       if(data.individuals[0]) {
         processAndInsertEvents(animal,data.individuals[0]);
       } else {
-        logger.log('debug',animal.name + ': No events found in Movebank.');
+        // logger.log('debug',animal.name + ': No events found in Movebank.');
       }
     });
   
