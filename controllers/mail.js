@@ -7,11 +7,13 @@ var mustache = require('mustache');
 const parseJson = require('parse-json');
 const mjml = require('mjml');
 
-const user = require('../models/User.js');
-const animal = require('../models/Animal.js');
-const storyData = require('../models/StoryData.js');
+const userModel = require('../models/User.js');
+const animalModel = require('../models/Animal.js');
+const eventModel = require('../models/Event.js');
 
-const story = require('./story.js');
+const storyDataModel = require('../models/StoryData.js');
+
+const storyController = require('./story.js');
 
 const nodemailer = require('nodemailer');
 
@@ -100,16 +102,14 @@ exports.generateOptInMailMarkup = ( data ) => {
 
 };
 
-
-
 exports.sendStory = () => {
 
   // all active animals
-  animal.find( { 'active': true } ).then( animals => {
+  animalModel.find( { 'active': true } ).then( animals => {
       // each animal 
       animals.forEach( animal => {
         // find latest storydata for animal 
-        storyData.findOne({ animalId : animal.id }).sort({ 'timestamp': -1 }).then( lastStory => {
+        storyDataModel.findOne({ animalId : animal.id }).sort({ 'timestamp': -1 }).then( lastStory => {
           // generat email markup
 
           var ts = moment(lastStory.timestamp).toISOString();
@@ -117,7 +117,7 @@ exports.sendStory = () => {
 
           story.generateStoryMarkup(ts, animal, 'Alex' ).then( htmlbody => {
             // find all active subscribers
-            user.find({ active: true }).then(users => {
+            userModel.find({ active: true }).then(users => {
               // send each one the email
               users.forEach( user => {
                 send('Bird Institute',user.email,'Krawh! News from '+ animal.name,htmlbody);
@@ -129,4 +129,81 @@ exports.sendStory = () => {
   });
 };
 
+exports.sendSimStory = () => {
+
+  // all active animals that have a start/feature date in the past
+  animalModel.find({ "active": true , featureDateStart : { $lte : new Date() } } ).then( animals => { 
+      
+      // each animal 
+      animals.forEach( animal => {
+
+        // animalModel.findOne({ '_id': animal._id }).then((item)=>{
+        //     item.simDayOffset = "asdasd";
+        //     item.save();
+        // });
+
+        // get feature range startdate
+        var eventdate = moment(animal.featureDateStart);
+        
+        eventdate.add(animal.simDayOffset,'day');
+        
+        winston.log('info','sending mail for ' + animal.name + ' on ' + eventdate.format('LL') + '...');        
+
+        //now find the closest event 
+        eventModel.findOne( { 'animalId' : animal.id , 'timestamp': { $gte : eventdate }}).sort({"timestamp" : 1}).then( closestEvent => {
+          
+          // if there is one, check if there is storyData
+          if(closestEvent) {
+
+            winston.log( 'info','closest event for ' + animal.name + ' is on ' + closestEvent.timestamp );        
+
+            // find storydata for lastevent, if none avail. get it
+            storyDataModel.findOne( { 'eventId' : closestEvent._id } ).then( story => {
+              if(story) {
+
+                storyController.generateStoryMarkup(moment(story.timestamp).toISOString(), animal, 'Alex' ).then( data => {
+
+                // find all active subscribers
+                userModel.find({ active: true }).then(users => {
+                  
+                  // send each one the email
+                  users.forEach( user => {
+                    send('Bird Institute',user.email,'Krawh! Simulated News from '+ animal.name +' day ' + animal.simDayOffset  ,data);
+                  });
+
+                });
+
+                 // res.render('story', {
+                 //    'body': data,
+                 //    'state': eventdate.format('ll') + ' - Event: ' + moment(closestEvent.timestamp).format('llll') + '_id: ' + closestEvent._id ,
+                 //    'prevStoryUrl' : '/story/' + animal.id + '/' + (dayoffset*1-1) ,
+                 //    'nextStoryUrl' : '/story/' + animal.id + '/' + (dayoffset*1+1) 
+                 //  });
+
+                });
+              
+              } else {
+
+                winston.log('info','No StoryData found for ' + animal.name + ' Bummer.');
+
+                // exports.fetchStoryDataForEvent(closestEvent).then( all => {
+                //   // do the mailing/markup building now
+                // });
+              }
+
+            });
+
+          } else {
+            winston.log('info','sendSimStory: No event found for storybuilding.');
+          }
+
+        });
+
+
+    });
+  });
+
+};
+
+    
 

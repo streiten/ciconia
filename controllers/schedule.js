@@ -31,6 +31,8 @@ exports.init = () => {
     var mqSchedule = later.parse.text('every 2 min');
     later.setInterval(mqHandler,mqSchedule); 
 
+    mail.sendSimStory();
+
 };
 
 const mqHandler = () => {
@@ -53,19 +55,9 @@ const mqHandler = () => {
 
 const mailingTime = () => {
 
-  // each animal that is active 
-  // animal.find({ "active": true , featureDateStart : { $lte : new Date() } } ).then( result => { 
-  // animal.find({ "active": true }).then( result => { 
-    
-  //   // special event ?
-  //   result.forEach( item => {
-  //     console.log(item.featureDateStart);
-  //   });
-
-  // });
 
   // send stories
-  mail.sendStory();
+  // mail.sendStory();
 
 };
 

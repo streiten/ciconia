@@ -63,9 +63,10 @@ exports.getMapData = (reqData,socket) => {
       reqData.end = animal.featureDateEnd;
     }
 
-
     movebank.getIndividualsEvents(reqData.ids.sid,reqData.ids.id,moment(reqData.start),moment(reqData.end)).then( data => {
 
+      // TBD: needs empty result handling !!! 
+      // 
       var events = data.individuals[0].locations; // .map( event => {
         
       //   //console.log(event.timestamp);

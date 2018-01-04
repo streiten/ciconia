@@ -85,8 +85,7 @@ const processAndInsertEvents = (animal,events) => {
   });
 
   // Initialise the bulk operations array
-  var bulkOps = [], mqOps = []
-      counter = 0;
+  var bulkOps = [], mqOps = [], counter = 0;
 
   eventsProcessed.forEach(item => {
 
