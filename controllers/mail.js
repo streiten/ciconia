@@ -167,7 +167,7 @@ exports.sendSimStory = () => {
 
                 if(story) {
 
-                  winston.log('info','sending mail for ' + animal.name + ' event on ' + eventdate.format('LL') + '...');        
+                  winston.log('info','Sending mail for ' + animal.name + ' event on ' + eventdate.format('LL') + '...');        
                   storyController.generateStoryMarkup(moment(story.timestamp).toISOString(), animal, 'Alex' ).then( data => {
 
                   // find all active subscribers

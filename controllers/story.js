@@ -39,11 +39,16 @@ exports.index = (req, res) => {
 
     if(req.params.day) {
       dayoffset = req.params.day;
-      eventdate.add(dayoffset,'day');
+
+      if( dayoffset == 'latest' ) {
+        eventdate = moment();
+      } else {
+        eventdate.add(dayoffset,'day');
+      }
     }
 
     //now find the closest event 
-    eventModel.findOne( { 'animalId' : animal.id , 'timestamp': { $gte : eventdate }}).sort({"timestamp" : 1}).then( closestEvent => {
+    eventModel.findOne( { 'animalId' : animal.id , 'timestamp': { $lte : eventdate }}).sort({"timestamp" : 1}).then( closestEvent => {
       
       // if there is one, check if there is storyDate else getit
       if(closestEvent) {
@@ -314,7 +319,7 @@ exports.generateStoryMarkup = ( timestamp , animal , username ) => {
 // get all data from external sources (and store in db locally)
 const fetchStoryData = ( event,animal ) => {
 
-    fetchViewData(event.location_lat,event.location_long).then( data => {
+    fetchViewData(event.lat,event.long).then( data => {
       
       data = JSON.stringify(data);
       storyData
@@ -324,7 +329,7 @@ const fetchStoryData = ( event,animal ) => {
         });
     });
     
-    fetchWeatherData(event.location_lat,event.location_long).then( data => {
+    fetchWeatherData(event.lat,event.long).then( data => {
       if(data) { 
         data = JSON.stringify(data);
         storyData
@@ -335,7 +340,7 @@ const fetchStoryData = ( event,animal ) => {
       };
     });
     
-    fetchWikipediaData(event.location_lat,event.location_long,1).then( data => {
+    fetchWikipediaData(event.lat,event.long,1).then( data => {
       if(data) { 
         data = JSON.stringify(data); 
         storyData
@@ -346,7 +351,7 @@ const fetchStoryData = ( event,animal ) => {
       }
     });
     
-    fetchWHSData(event.location_lat,event.location_long,1).then( data => {
+    fetchWHSData(event.lat,event.long,1).then( data => {
       if(data[0]) { 
         data = JSON.stringify(data[0]);
         storyData
@@ -652,21 +657,19 @@ const fetchWHSData = function (latitude,longitude,count) {
 
 const fetchStatData = function (event) {
 
-  var latitude = event.location_lat;
-  var longitude = event.location_long;
+  var latitude = event.lat;
+  var longitude = event.long;
 
   var gn = new geonames({username: 'ciconia', lan: 'en', encoding: 'JSON'});  
 
   // country
-  var fetchCountry = gn.countrySubdivision( { lat : latitude, lng: longitude }).then( data => {
-    
-    console.log(data);
+  var fetchCountry = gn.countrySubdivision( { 'lat' : latitude, 'lng' : longitude }).then( data => {
     return { 'key' : 'country' , 'value' : data };
   });
   
   // elevation: flat lands, alps, glacier ...
   // birds flying height
-  var fetchElevation = gn.srtm1( { lat : latitude, lng: longitude }).then( data => {
+  var fetchElevation = gn.srtm1( { 'lat' : latitude, 'lng': longitude }).then( data => {
         
     if(data.srtm1 == -32768) {
       console.log('Elevation: looks like over the sea...');
@@ -686,7 +689,6 @@ const fetchStatData = function (event) {
         items.forEach( item => {
           statobj[item['key']] = item['value'] ;
         });
-        console.log(statobj);
         return statobj;
       
       });

@@ -34,6 +34,7 @@ exports.init = () => {
     later.setInterval(mqHandler,mqSchedule); 
 
     if(APPconfig.sim.active) {
+      mqHandler();
       mail.sendSimStory();
     }
 
@@ -67,7 +68,7 @@ const mailingTime = () => {
 
   // send stories
   mail.sendStory();
-  
+
   if(APPconfig.sim.active) {
     mail.sendSimStory();
   }
