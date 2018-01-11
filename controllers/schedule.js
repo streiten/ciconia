@@ -1,4 +1,6 @@
 var fs = require('fs');
+var APPconfig = JSON.parse(fs.readFileSync('./config.json', 'utf8'));
+
 var moment = require('moment');
 var later = require('later');
 
@@ -31,22 +33,30 @@ exports.init = () => {
     var mqSchedule = later.parse.text('every 2 min');
     later.setInterval(mqHandler,mqSchedule); 
 
-    mail.sendSimStory();
+    if(APPconfig.sim.active) {
+      mail.sendSimStory();
+    }
 
 };
 
 const mqHandler = () => {
 
+  // check for events that don't have storydata and no message on the que and add them to the que
+  // remove adding to que from event fetching
+
   // get items from que
-  mqModel.find().limit(10).then( messages => {
+  mqModel.find().limit(20).then( messages => {
+    
     if(messages.length > 0) {
       logger.info('Work on the mq to be done:' + messages.length);
+      
       messages.forEach( msg => {
          // switch case type later on
          event.eventModel.findOne({'_id': msg.message.fetchStory.eventId}).then( event => {
             story.fetchStoryDataForEvent(event);
          });
          msg.remove();
+
       });
     }
   });
@@ -55,9 +65,12 @@ const mqHandler = () => {
 
 const mailingTime = () => {
 
-
   // send stories
-  // mail.sendStory();
+  mail.sendStory();
+  
+  if(APPconfig.sim.active) {
+    mail.sendSimStory();
+  }
 
 };
 

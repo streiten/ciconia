@@ -1,11 +1,10 @@
 var fs = require('fs');
 var winston = require('winston');
 var moment = require('moment');
-var movebank = require('./libs/movebank.js');
-var animal = require('./libs/animal.js');
 var Event = require('./models/Event.js');
 var User = require('./models/User.js');
 
+var geonames = require('geonames.js');
 
 function Test() {
   
@@ -21,6 +20,19 @@ function Test() {
     // object of all the users
     console.log(users);
   });
+
+
+  var gn = new geonames({username: 'ciconia', lan: 'en', encoding: 'JSON'});  
+  
+  var latitude = "31";
+  var longitude = "-112";
+  
+  // country
+  var fetchCountry = gn.countrySubdivision( { lat : latitude, lng: longitude }).then( data => {
+    console.log( { 'key' : 'country' , 'value' : data });
+  });
+
+
   // Animal.findAll({ where: { active: 1 } }).then(animals => {
 
   // StoryData.findAll().then( rows => {

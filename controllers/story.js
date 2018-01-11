@@ -659,6 +659,8 @@ const fetchStatData = function (event) {
 
   // country
   var fetchCountry = gn.countrySubdivision( { lat : latitude, lng: longitude }).then( data => {
+    
+    console.log(data);
     return { 'key' : 'country' , 'value' : data };
   });
   
@@ -684,7 +686,7 @@ const fetchStatData = function (event) {
         items.forEach( item => {
           statobj[item['key']] = item['value'] ;
         });
-
+        console.log(statobj);
         return statobj;
       
       });

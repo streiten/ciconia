@@ -43,7 +43,7 @@ const send = (fromName,to,subject,body) => {
   let transporter = nodemailer.createTransport(smtpConfig);
 
   if( 'simulate 'in APPconfig.smtp || APPconfig.smtp.simulate ) {
-    console.log('+++ Mail send simulated +++ ');
+    console.log('+++ Mail/SMTP send simulated +++ ');
     // console.log(to,subject,body);
     // console.log('+++ Mail send simulated +++ ');
 
@@ -131,68 +131,78 @@ exports.sendStory = () => {
 
 exports.sendSimStory = () => {
 
+  // current date - start
+  var simStartDate = moment(APPconfig.sim.start);
+  var simDayOffset = moment().diff(simStartDate,'days');
+  winston.log( 'info','+++ Send simulated migration story with days offset ' +  simDayOffset + ' +++' );
+
   // all active animals that have a start/feature date in the past
   animalModel.find({ "active": true , featureDateStart : { $lte : new Date() } } ).then( animals => { 
       
       // each animal 
       animals.forEach( animal => {
 
-        // animalModel.findOne({ '_id': animal._id }).then((item)=>{
-        //     item.simDayOffset = "asdasd";
-        //     item.save();
-        // });
-
         // get feature range startdate
         var eventdate = moment(animal.featureDateStart);
+        eventdate.add(simDayOffset,'day');
         
-        eventdate.add(animal.simDayOffset,'day');
-        
-        winston.log('info','sending mail for ' + animal.name + ' on ' + eventdate.format('LL') + '...');        
-
         //now find the closest event 
         eventModel.findOne( { 'animalId' : animal.id , 'timestamp': { $gte : eventdate }}).sort({"timestamp" : 1}).then( closestEvent => {
           
           // if there is one, check if there is storyData
           if(closestEvent) {
 
-            winston.log( 'info','closest event for ' + animal.name + ' is on ' + closestEvent.timestamp );        
+            // is the event found within the feature range, otherwise skip
+            // console.log('startdate ts:',moment(animal.featureDateStart));
+            // console.log('enddate ts:',moment(animal.featureDateEnd));
+            // console.log('event ts:',moment(closestEvent.timestamp));
 
-            // find storydata for lastevent, if none avail. get it
-            storyDataModel.findOne( { 'eventId' : closestEvent._id } ).then( story => {
-              if(story) {
+            if(moment(closestEvent.timestamp).isBefore(moment(animal.featureDateEnd))) {
+            
+              winston.log( 'info','Closest event in DB for ' + animal.name + ' is on ' + closestEvent.timestamp );        
+              
+              // find storydata for last event otherwise fetch it ( fetch it... should be moved to model for global use)
+              storyDataModel.findOne( { 'eventId' : closestEvent._id } ).then( story => {
+                
 
-                storyController.generateStoryMarkup(moment(story.timestamp).toISOString(), animal, 'Alex' ).then( data => {
+                if(story) {
 
-                // find all active subscribers
-                userModel.find({ active: true }).then(users => {
-                  
-                  // send each one the email
-                  users.forEach( user => {
-                    send('Bird Institute',user.email,'Krawh! Simulated News from '+ animal.name +' day ' + animal.simDayOffset  ,data);
+                  winston.log('info','sending mail for ' + animal.name + ' event on ' + eventdate.format('LL') + '...');        
+                  storyController.generateStoryMarkup(moment(story.timestamp).toISOString(), animal, 'Alex' ).then( data => {
+
+                  // find all active subscribers
+                  userModel.find({ active: true }).then(users => {
+                    
+                    // send each one the email
+                    users.forEach( user => {
+                      send('Bird Institute',user.email,'Krawh!  +++ simulated +++ update from '+ animal.name +' for ' + eventdate.format('LL')  ,data);
+                    });
+
                   });
 
-                });
+                   // res.render('story', {
+                   //    'body': data,
+                   //    'state': eventdate.format('ll') + ' - Event: ' + moment(closestEvent.timestamp).format('llll') + '_id: ' + closestEvent._id ,
+                   //    'prevStoryUrl' : '/story/' + animal.id + '/' + (dayoffset*1-1) ,
+                   //    'nextStoryUrl' : '/story/' + animal.id + '/' + (dayoffset*1+1) 
+                   //  });
 
-                 // res.render('story', {
-                 //    'body': data,
-                 //    'state': eventdate.format('ll') + ' - Event: ' + moment(closestEvent.timestamp).format('llll') + '_id: ' + closestEvent._id ,
-                 //    'prevStoryUrl' : '/story/' + animal.id + '/' + (dayoffset*1-1) ,
-                 //    'nextStoryUrl' : '/story/' + animal.id + '/' + (dayoffset*1+1) 
-                 //  });
+                  });
+                
+                } else {
 
-                });
-              
-              } else {
+                  winston.log('info','No StoryData found for ' + animal.name + ' Bummer. Assume this will never happen as everything in DB.');
 
-                winston.log('info','No StoryData found for ' + animal.name + ' Bummer.');
+                  // exports.fetchStoryDataForEvent(closestEvent).then( all => {
+                  //   // do the mailing/markup building now
+                  // });
+                }
 
-                // exports.fetchStoryDataForEvent(closestEvent).then( all => {
-                //   // do the mailing/markup building now
-                // });
-              }
-
-            });
-
+              });
+                          
+            } else {
+              winston.log('info','For ' + animal.name + ' it is out of featured date range...');
+            }
           } else {
             winston.log('info','sendSimStory: No event found for storybuilding.');
           }

@@ -8,7 +8,8 @@ function fetchEvents() {
   winston.level = 'debug';
   winston.log('info', moment().format() + ' - Fetching / Updating animals feature date range...');
 
-   // eventController.updateEvents();
+  // ???
+  // eventController.updateEvents();
 
   animalModel.find({ "active": true } ).then( result => { 
     result.forEach( item => {
