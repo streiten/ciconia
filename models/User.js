@@ -14,7 +14,7 @@ var userSchema = new Schema({
   active: { type: Boolean, default: false},
   frequency: { type: Number, default: 3},
   hash: { type: String, default: shortid.generate },
-  url: String,
+  onboarded:{ type: Boolean, default: false },
   created_at: { type: Date, default: Date.now },
   updated_at: Date
 });
