@@ -48,7 +48,7 @@ exports.index = (req, res) => {
       }
     }
 
-    console.log(eventdate);
+    // console.log(eventdate);
 
     //now find the closest event  -> lte doesnt work for feature start date & latest
     eventModel.findOne( { 'animalId' : animal.id , 'timestamp': { $gte : eventdate }}).sort({"timestamp" : 1}).then( closestEvent => {
@@ -93,296 +93,192 @@ exports.index = (req, res) => {
 };
 
 
-exports.fetchStoryData = (animalID,start) => {
+exports.generateStoryMarkup = ( event , username ) => {
+  
+  // get storyData for event, then prepare view data
+  storyData.findOne( { "eventId" : event._id } ).then( result => {
+    
+    // if no result -> fetch data first
+    var result = parseJson(result.data);
 
-  animal.findOne({ 'id': animalID }).then( animal => {
-
-    // find timestamp of last story data in DB and use it as start date for range
-    storyData.findOne({ 'animalId' : animal.id }).sort({'timestamp': -1 }).then( result => {
-      
-      if(result) {
-       winston.log('info',animal.name + ': Last story data @ ' + result.timestamp.toISOString());
-       start = moment(result.timestamp);
-      } else {
-        // if there isn't a previous one  the start date from fn arguement is used
-        winston.log('info',animal.name + ': No story data found. Starting @ ' + moment(start).toISOString());
-      };
-
-      movebank.getIndividualsEvents(animal.studyId,animal.id,start.add(1,'seconds'),moment()).then( data => {
-        if( data.individuals[0] ) {  
-          
-          var events = data.individuals[0].locations.map( event => {
-            // sequelize needs ISO 8601 Format
-            event.timestamp = moment(event.timestamp).toISOString();
-            return event;
-          });
-          
-         winston.log('info','Fetching data for ' + animal.name +' now. '+ events.length + ' events...');
-          
-          if(events.length > 200 ) {
-              winston.log('warning',events.length + 'are too much. Droping everything beyond 200.');
-              events.splice(200);            
-          }
-
-          events.forEach((item,idx) => {
-            fetchStoryData(events[idx],animal);
-            winston.log('info','Data fetched for...' + item.timestamp);
-          });
-        
-        } else {
-          winston.log('info',animal.name + ': No events for that timerange.');
-        }
-      });
-
+    var resultObj = {};
+    result.forEach( item => {
+      resultObj[item['key']] = item['data'] ;
     });
 
-  });
+    console.log(resultObj);
+          
+    var markup = '';
+
+    // generateViewMarkup(result.data),
+    // generateWikipediaMarkup(result.data),
+    // generateWHSMarkup(result.data),
+    // generateStatsMarkup(result.data),
+    // generateWeatherMarkup(result.data)
+
+    var introview = {};
+
+    introview.individual = animal.name;
+    introview.name = username;
+
+    if(storyPartsObj['weather']) {
+      introview.temperature = storyPartsObj['weather'].weatherObservation.temperature;
+      introview.wind = storyPartsObj['weather'].weatherObservation.windSpeed;
+      introview.weather = storyPartsObj['weather'].weatherObservation.clouds;
+    }
+
+    // distance ... last spoke ? start of migration ?
+    if(storyPartsObj['stat']) {
+      console.log(storyPartsObj['stat']);
+      introview.elevation = storyPartsObj['stat'].elevation.srtm1;
+      introview.country = storyPartsObj['stat'].country.countryName;
+    }
+
+    var viewtpl = fs.readFileSync('./views/mail/intro.mjml', 'utf8');
+    markup =  mustache.render(viewtpl, introview);
+
+    // compositing the story parts now
+    markup += storyPartsObj['view'] + storyPartsObj['wikipedia'] + storyPartsObj['whs'];
+
+    // Others - loop
+    view = {
+      individuals : [
+      {
+        name: 'Joe',
+        country: 'Belarus',
+      },
+      {
+        name: 'Sepp',
+        country: 'Bavaria',
+      }
+    ]};
+
+    var moretpl = fs.readFileSync('./views/mail/more.mjml', 'utf8');
+    markup += mustache.render(moretpl, view);
+    
+    wraptpl = fs.readFileSync('./views/mail/template.mjml', 'utf8');
+    view = { 'body' : markup };
+    mjmlmail = mustache.render(wraptpl, view);
+
+    try {
+      const { html, errors } = mjml.mjml2html( mjmlmail, { beautify: true, minify: false, level: "soft" } );
+
+      if(errors.length > 0) {
+        console.log(errors.map(e => e.formattedMessage).join('\n'))
+      }
+
+      return html;
+
+    } catch(e) {
+      if (e.getMessages) {
+          console.log(e.getMessages());
+        } else {
+          throw e;
+        }
+    }
+   });
 
 };
 
-exports.generateStoryMarkup = ( timestamp , animal , username ) => {
-  
-  const queryStoryViewData = ( timestamp , animalId ) => {
-      return storyData.findOne( { "timestamp" : timestamp, "animalId":animalId , "type" : "view" } ).then( result => {
-          
-          if(result) {
-              var url = parseJson(result.json);
-              var view = {
-                view_img_src: url.imgurl
-              };
-          
-              var viewtpl = fs.readFileSync('./views/mail/view.mjml', 'utf8');
-              var mjmltpl =  mustache.render(viewtpl, view);
-              return { "key" : "view" , "value" : mjmltpl };
-          } else return { "key" : "view" , "value" : null };
-      });
-  };
 
-  const queryStoryWHSData = ( timestamp , animalId ) => {
-      
-      return storyData.findOne( { "timestamp" : timestamp, "animalId":animalId , "type" : "whs" } ).then( result => {
-        if(result) {
-
-            var data = parseJson(result.json);
-
-            // update to loop if multiple sites ???
+const generateViewDataMarkup = ( storyData ) => {
+        
+        // if data there...
+        if(storyData) {
+            var url = parseJson(result.json);
+            
             var view = {
-              wh_title: data.site,
-              wh_body: data.short_description,
-              wh_img_src: data.ogimg_url,
-              wh_url: data.http_url,
-              wh_category: data.category
+              view_img_src: url.imgurl
             };
-
-            var whstpl = fs.readFileSync('./views/mail/whs.mjml', 'utf8');
-            var mjmltpl = mustache.render(whstpl, view);
-              return {"key" : "whs", "value" : mjmltpl };
-        } else return { "key" : "whs" , "value" : null };
-      });
-  };
-
-  const queryStoryWikipediaData = ( timestamp , animalId ) => {
-      
-      return storyData.find( { "timestamp" : timestamp, "animalId":animalId ,  "type" : "wikipedia" } ).then( result => {
-          if(result) {
-              
-              var view = { wikis : []};
-
-              // { summary: 'Alemdar, aka Gazi Alemdar, was a former Turkish salvage tug, which is best known for her victorious engagement with a French navy warship during the Turkish War of Independence. Built in 1898 in Denmark, the Danish-flagged vessel was seized by the Ottoman Empire during World War I (...)',
-              //        elevation: 5,
-              //        lng: 31.41616,
-              //        distance: '1.8119',
-              //        rank: 77,
-              //        lang: 'en',
-              //        title: 'Alemdar (ship)',
-              //        lat: 41.2682,
-              //        wikipediaUrl: 'en.wikipedia.org/wiki/Alemdar_%28ship%29' 
-              // }
-
-              result.forEach( (wikiItem,idx) => {
-
-                var wikiItemObj = parseJson(wikiItem.json);
-
-                view.wikis[idx] = { 
-                  "wiki_title": wikiItemObj.title,
-                  "wiki_body": wikiItemObj.summary,
-                  "wiki_distance": wikiItemObj.distance,
-                  "wiki_img_src": "https://upload.wikimedia.org/wikipedia/commons/4/45/Maricopa_County_Courthouse_October_6_2013_Phoenix_Arizona_2816x2112_Rear.JPG",
-                  "wiki_url": 'https://' + wikiItemObj.wikipediaUrl
-                };
-              });
-
-              wikitpl = fs.readFileSync('./views/mail/wiki.mjml', 'utf8');
-              mjmltpl = mustache.render(wikitpl, view);
-
-              return {"key" : "wikipedia" , "value" : mjmltpl };
-          } else return { "key" : "wikipedia" , "value" : null };
-
-      });
-  };
-
-  const queryStoryWeatherData = ( timestamp , animalId ) => {
-      
-      return storyData.findOne( { "timestamp" : timestamp, "animalId":animalId , "type" : "weather" } ).then( result => {
-          if(result) {
-            return {"key" : "weather" , "value" : parseJson(result.json) };
-          } else return { "key" : "weather" , "value" : null };
-
-      });
-  };
-
-  const queryStoryStatsData = ( timestamp , animalId ) => {
-      return storyData.findOne( { "timestamp" : timestamp, "animalId":animalId ,  "type" : "stat" } ).then( result => {
-          if(result) {
-            return {"key" : "stat" , "value" : parseJson(result.json) };
-          } else return { "key" : "stat" , "value" : null };
-      });
-  };
-
-
-  return Promise.all([
-       
-       queryStoryViewData(timestamp,animal.id),
-       queryStoryWikipediaData(timestamp,animal.id),
-       queryStoryWHSData(timestamp,animal.id),
-       queryStoryStatsData(timestamp,animal.id),
-       queryStoryWeatherData(timestamp,animal.id)
-
-       ]).then(storyParts => {
-
-        // press results to object
-        var storyPartsObj = {};
-        storyParts.forEach( part => {
-          storyPartsObj[part['key']] = part['value'];
-        });
-
         
-        var markup = '';
-        var introview = {};
-
-        introview.individual = animal.name;
-        introview.name = username;
-
-        if(storyPartsObj['weather']) {
-          introview.temperature = storyPartsObj['weather'].weatherObservation.temperature;
-          introview.wind = storyPartsObj['weather'].weatherObservation.windSpeed;
-          introview.weather = storyPartsObj['weather'].weatherObservation.clouds;
-        }
-
-        // distance ... last spoke ? start of migration ?
-        if(storyPartsObj['stat']) {
-          console.log(storyPartsObj['stat']);
-          introview.elevation = storyPartsObj['stat'].elevation.srtm1;
-          introview.country = storyPartsObj['stat'].country.countryName;
-        }
-
-        var viewtpl = fs.readFileSync('./views/mail/intro.mjml', 'utf8');
-        markup =  mustache.render(viewtpl, introview);
-    
-        // compositing the story parts now
-        markup += storyPartsObj['view'] + storyPartsObj['wikipedia'] + storyPartsObj['whs'];
-
-        // Others - loop
-        view = {
-          individuals : [
-          {
-            name: 'Joe',
-            country: 'Belarus',
-          },
-          {
-            name: 'Sepp',
-            country: 'Bavaria',
-          }
-        ]};
-
-        var moretpl = fs.readFileSync('./views/mail/more.mjml', 'utf8');
-        markup += mustache.render(moretpl, view);
+            var viewtpl = fs.readFileSync('./views/mail/view.mjml', 'utf8');
+            var mjmltpl =  mustache.render(viewtpl, view);
+            return mjmltpl;
         
-        wraptpl = fs.readFileSync('./views/mail/template.mjml', 'utf8');
-        view = { 'body' : markup };
-        mjmlmail = mustache.render(wraptpl, view);
+        } else return null;
 
-        try {
-          const { html, errors } = mjml.mjml2html( mjmlmail, { beautify: true, minify: false, level: "soft" } );
-
-          if(errors.length > 0) {
-            console.log(errors.map(e => e.formattedMessage).join('\n'))
-          }
-
-          return html;
-
-        } catch(e) {
-          if (e.getMessages) {
-              console.log(e.getMessages());
-            } else {
-              throw e;
-            }
-        }
-       });
 };
 
-// // get all data from external sources (and store in db locally)
-// const fetchStoryData = ( event,animal ) => {
+const generateWHSDataMarkup = ( storyData ) => {
+    
+      if(storyData) {
+          var data = parseJson(result.json);
 
-//     fetchViewData(event.lat,event.long).then( data => {
-      
-//       data = JSON.stringify(data);
-//       storyData
-//         .findOneAndUpdate({"timestamp": event.timestamp , 'type' : 'view', 'animalId' : animal.id }, { '$setOnInsert' : { 'eventId' : event._id, 'json': data }},{ 'upsert':true })
-//         .catch((error) => {
-//           console.log(error);
-//         });
-//     });
-    
-//     fetchWeatherData(event.lat,event.long).then( data => {
-//       if(data) { 
-//         data = JSON.stringify(data);
-//         storyData
-//           .findOneAndUpdate({"timestamp": event.timestamp , 'type' : 'weather', 'animalId' : animal.id }, { '$setOnInsert' : {'eventId' : event._id, 'json' : data }},{ 'upsert':true })
-//           .catch((error) => {
-//             console.log(error);
-//           });
-//       };
-//     });
-    
-//     fetchWikipediaData(event.lat,event.long,1).then( data => {
-//       if(data) { 
-//         data = JSON.stringify(data); 
-//         storyData
-//           .findOneAndUpdate({"timestamp": event.timestamp , 'type' : 'wikipedia', 'animalId' : animal.id }, { '$setOnInsert' : {'eventId' : event._id, 'json' : data }},{ 'upsert':true })
-//           .catch((error) => {
-//             console.log(error);
-//           });
-//       }
-//     });
-    
-//     fetchWHSData(event.lat,event.long,1).then( data => {
-//       if(data[0]) { 
-//         data = JSON.stringify(data[0]);
-//         storyData
-//           .findOneAndUpdate({"timestamp": event.timestamp , 'type' : 'whs', 'animalId' : animal.id }, { '$setOnInsert' : {'eventId' : event._id, 'json' : data }},{ 'upsert':true })
-//           .catch((error) => {
-//             console.log(error);
-//           });
-//       }
-//     });
+          // update to loop if multiple sites ???
+          var view = {
+            wh_title: data.site,
+            wh_body: data.short_description,
+            wh_img_src: data.ogimg_url,
+            wh_url: data.http_url,
+            wh_category: data.category
+          };
 
-//     fetchStatData(event).then( data => {
-//       if(data) { 
-//         data = JSON.stringify(data);
-//         storyData
-//           .findOneAndUpdate({"timestamp": event.timestamp , 'type' : 'stat', 'animalId' : animal.id }, { '$setOnInsert' : {'eventId' : event._id, 'json' : data }},{ 'upsert':true })
-//           .catch((error) => {
-//             console.log(error);
-//           });
-//       }
-//     });
-// };
+          var whstpl = fs.readFileSync('./views/mail/whs.mjml', 'utf8');
+          var mjmltpl = mustache.render(whstpl, view);
+            return  mjmltpl;
+      } else return null ;
+};
+
+const generateWikipediaDataMarkup = ( storyData ) => {
+    
+        if(result) {
+            
+            var view = { wikis : []};
+
+            // { summary: 'Alemdar, aka Gazi Alemdar, was a former Turkish salvage tug, which is best known for her victorious engagement with a French navy warship during the Turkish War of Independence. Built in 1898 in Denmark, the Danish-flagged vessel was seized by the Ottoman Empire during World War I (...)',
+            //        elevation: 5,
+            //        lng: 31.41616,
+            //        distance: '1.8119',
+            //        rank: 77,
+            //        lang: 'en',
+            //        title: 'Alemdar (ship)',
+            //        lat: 41.2682,
+            //        wikipediaUrl: 'en.wikipedia.org/wiki/Alemdar_%28ship%29' 
+            // }
+
+            result.forEach( (wikiItem,idx) => {
+
+              var wikiItemObj = parseJson(wikiItem.json);
+
+              view.wikis[idx] = { 
+                "wiki_title": wikiItemObj.title,
+                "wiki_body": wikiItemObj.summary,
+                "wiki_distance": wikiItemObj.distance,
+                "wiki_img_src": "https://upload.wikimedia.org/wikipedia/commons/4/45/Maricopa_County_Courthouse_October_6_2013_Phoenix_Arizona_2816x2112_Rear.JPG",
+                "wiki_url": 'https://' + wikiItemObj.wikipediaUrl
+              };
+            });
+
+            wikitpl = fs.readFileSync('./views/mail/wiki.mjml', 'utf8');
+            mjmltpl = mustache.render(wikitpl, view);
+
+            return  mjmltpl ;
+        } else return  null ;
+
+};
+
+const generateWeatherDataMarkup = ( storyData ) => {
+    
+        if(result) {
+          return {"key" : "weather" , "value" : parseJson(result.json) };
+        } else return { "key" : "weather" , "value" : null };
+
+};
+
+const generateStatsDataMarkup = ( storyData ) => {
+
+        if(storyData) {
+          return {"key" : "stat" , "value" : parseJson(result.json) };
+        } else return { "key" : "stat" , "value" : null };
+
+};
+
+
 
 // get all data from external sources (and store in db locally)
 exports.fetchStoryDataForEvent = ( event ) => {
     
-    // console.log('Fetching for' + event);
+    // console.log('Fetching for', event);
     var animalDir = 'data/' + event.animalId;
     
     if (!fs.existsSync(animalDir)){
@@ -400,86 +296,43 @@ exports.fetchStoryDataForEvent = ( event ) => {
       data.localPath = 'data/'+event.animalId+'/'+event.animalId +'-'+ moment(event.timestamp).valueOf() + '.jpg';
 
       var mapImageSave = request(options).then( body  => {
+
         var writeTo = 'data/'+event.animalId+'/'+event.animalId +'-'+ moment(event.timestamp).valueOf() + '.jpg';
-        
         fs.writeFile(writeTo, body, 'binary', function (err) {
           if(err) {
             winston.log('error',err);
           }
         });
+
+        return { 'key' : 'view' , 'data' : data };
+
+
       }).catch(err =>  {
         winston.log('error',err);
       });
       
-      data = JSON.stringify(data);
-      
-
-      var writeDBPromise = storyData
-        .findOneAndUpdate({"timestamp": event.timestamp , 'type' : 'view', 'animalId' : event.animalId }, {'eventId' : event._id, '$setOnInsert' : { 'json': data }},{ 'upsert':true })
-        .catch((error) => {
-          winston.log('error',error);
-        });
-
-      return Promise.all([
-          mapImageSave,
-          writeDBPromise
-        ]);
+      return mapImageSave;
         
     });
-    
-    var WeatherDataPromise = fetchWeatherData(event.lat,event.long).then( data => {
-      if(data) { 
-        data = JSON.stringify(data);
-        return storyData
-          .findOneAndUpdate({"timestamp": event.timestamp , 'type' : 'weather', 'animalId' : event.animalId }, {'eventId' : event._id, '$setOnInsert' : { 'json' : data }},{ 'upsert':true })
-          .catch((error) => {
-            console.log(error);
-          });
-      };
-    });
-    
-    var WikipediaDataPromise = fetchWikipediaData(event.lat,event.long,1).then( data => {
-      if(data) { 
-        data = JSON.stringify(data); 
-        return storyData
-          .findOneAndUpdate({"timestamp": event.timestamp , 'type' : 'wikipedia', 'animalId' : event.animalId }, {'eventId' : event._id, '$setOnInsert' : { 'json' : data }},{ 'upsert':true })
-          .catch((error) => {
-            console.log(error);
-          });
-      }
-    });
-    
-    var WHSDataPromise = fetchWHSData(event.lat,event.long,1).then( data => {
-      if(data[0]) { 
-        data = JSON.stringify(data[0]);
-        return storyData
-          .findOneAndUpdate({"timestamp": event.timestamp , 'type' : 'whs', 'animalId' : event.animalId }, { '$setOnInsert' : {'eventId' : event._id, 'json' : data }},{ 'upsert':true })
-          .catch((error) => {
-            console.log(error);
-          });
-      }
-    });
-
-    var StatDataPromise = fetchStatData(event).then( data => {
-      if(data) { 
-        data = JSON.stringify(data);
-        return storyData
-          .findOneAndUpdate({"timestamp": event.timestamp , 'type' : 'stat', 'animalId' : event.animalId }, { '$setOnInsert' : {'eventId' : event._id, 'json' : data }},{ 'upsert':true })
-          .catch((error) => {
-            console.log(error);
-          });
-      }
-    });
-
-
+  
     // return Promise all fetches
     return Promise.all([
-        StatDataPromise,
-        WHSDataPromise,
-        WikipediaDataPromise,
-        WeatherDataPromise,
+        fetchStatData(event),
+        fetchWHSData(event.lat,event.long,1),
+        fetchWikipediaData(event.lat,event.long,1),
+        fetchWeatherData(event.lat,event.long),
         ViewDataPromise
-      ]);
+      ]).then( data => {
+        console.log(data);
+        data = JSON.stringify(data);
+
+        return storyData
+          .findOneAndUpdate({ 'eventId' : event._id }, { '$setOnInsert' : {'animalId' : event.animalId,'eventId' : event._id, 'data' : data }},{ 'upsert':true })
+          .catch((error) => {
+            console.log(error);
+          });
+
+      });
 
 };
 
@@ -546,7 +399,7 @@ const fetchWeatherData = function (latitude,longitude) {
       // console.log(data);
       return false;
     } else {
-      return data;      
+      return { 'key' : 'weather' , 'data' : data  };      
     }
   });
 
@@ -610,8 +463,10 @@ const fetchWikipediaData = function (latitude,longitude,count) {
   return gn.findNearbyWikipedia( { lat : latitude, lng: longitude, maxRows: count, radius : 20 })
   .then( data => {
     // also harvest image from og:image of page
-    return data['geonames'][0];
+    return { 'key' :'wikipedia' ,  'data' : data  } ;      
+
   });
+
 
   /*
   { geonames: 
@@ -633,7 +488,10 @@ const fetchWikipediaData = function (latitude,longitude,count) {
 const fetchWHSData = function (latitude,longitude,count) {
     
     var whs = new WHSites(__dirname + '/../data/whc-en.xml');
-    return whs.nearestSites(latitude,longitude,500,count);
+    
+    return whs.nearestSites(latitude,longitude,500,count).then( data => {
+      return { 'key' : 'WHS' , 'data' : data };      
+    })
 
     // { category: 'Cultural',
     //    criteria_txt: '(i)(ii)(iii)(iv)',
@@ -695,26 +553,11 @@ const fetchStatData = function (event) {
           statobj[item['key']] = item['value'] ;
         });
         
-        // console.log(statobj);
-        
-        return statobj;
-      
+        return { 'key' : 'stat' , 'data' : statobj };      
+
       });
 
 };
-
-
-const updateStoryData = () => {
-
-      // get all active animals 
-      animal.find({ "active": true } ).then( result => { 
-        result.forEach( item => {
-          story.fetchStoryData(item.id,moment().subtract(3,'hours'),true);
-        });
-      });
-
-};
-
 
 
 

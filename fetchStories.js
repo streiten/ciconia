@@ -2,8 +2,7 @@ var winston = require('winston');
 var moment = require('moment');
 
 const animalModel = require('./models/Animal.js');
-const eventModel = require('./models/event.js');
-// const eventController = require('./controllers/event.js');
+const eventController = require('./controllers/event.js');
 const storyController = require('./controllers/story.js');
 
 function fetchStories() {
@@ -12,14 +11,17 @@ function fetchStories() {
 
   animalModel.find({ "active": true } ).then( animals => { 
     animals.forEach( animal => {
-      eventModel.find({ "animalId" : animal.id } ).limit(1).then(events => {
-          events.forEach( event => {
-            storyController.fetchStoryDataForEvent(event);
-          });
+      
+      eventController.findClosest(animal.id,moment()).then(event => {
+        console.log(event._id,event.timestamp);
+        
+        // storyController.fetchStoryDataForEvent(event);
+        storyController.generateStoryMarkup(event);
+      
       });
+
     });
   });
-
 }
 
 fetchStories();

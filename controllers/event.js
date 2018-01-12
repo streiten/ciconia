@@ -9,6 +9,45 @@ const mqModel = require('../models/MessageQue.js');
 
 exports.eventModel = eventModel; 
 
+exports.findLast = (animalId) => {
+    return eventModel.findOne({ "animalId" : animalId } ).sort({'timestamp':-1});
+};
+
+exports.findClosest = (animalId,time) => {
+    
+    var aggregateParams = [
+    {
+        $addFields : {
+            differenceToQueriedTime : {
+                $abs : {
+                    $subtract : [new Date(time), "$timestamp"]
+                }
+            }
+        },
+    },
+    {
+        $match : {
+          animalId : animalId
+        }
+    },
+    {
+        $sort : {differenceToQueriedTime : 1}
+    },
+    {
+        $limit : 1
+    }
+    ];
+
+    var resultPromise = eventModel.aggregate(aggregateParams).then(result => {
+      // only first/one result
+      return result[0];
+    });
+
+    return resultPromise;
+
+};
+
+
 exports.updateEvents = () => {
 
   logger.debug('Updating Events...');

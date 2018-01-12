@@ -6,11 +6,9 @@ mongoose.connect(APPconfig.mongodb.host,{  useMongoClient: true });
 
 var Schema = mongoose.Schema;
 var storyDataSchema = new Schema({
-  timestamp: Date,
   animalId: Number,
   eventId: { type: Schema.Types.ObjectId, ref: 'Event' },
-  type: String,
-  json: Schema.Types.Mixed,
+  data: Schema.Types.Mixed,
   created_at: { type : Date , default: Date.now()},
   updated_at: Date
 });
