@@ -7,12 +7,13 @@ var later = require('later');
 var logger = require('./logger.js');
 
 const mail = require('./mail.js');
-const story = require('./story.js');
-const event = require('./event.js');
+const storyController = require('./story.js');
+
+const eventController = require('./event.js');
 
 const animal = require('../models/Animal.js');
 var movebank = require('../models/Movebank.js');
-const mqModel = require('../models/MessageQue.js');
+// const mqModel = require('../models/MessageQue.js');
 
 
 exports.init = () => {
@@ -22,46 +23,71 @@ exports.init = () => {
     // mailing
     var mailschedule = later.parse.text('at 11:00 am');
     // var mailschedule = later.parse.text('every 10 seconds');   
-    later.setInterval(mailingTime,mailschedule);
+    // later.setInterval(mailingTime,mailschedule);
     
     // checking for new events
-    event.updateEvents();
+    eventController.updateEvents();
+
     var eventUpdateSchedule = later.parse.text('every 2 hour');
-    later.setInterval(event.updateEvents,eventUpdateSchedule); 
+    later.setInterval(eventController.updateEvents,eventUpdateSchedule); 
 
     // message que
-    var mqSchedule = later.parse.text('every 2 min');
-    later.setInterval(mqHandler,mqSchedule); 
+    // var mqSchedule = later.parse.text('every 2 min');
+    // later.setInterval(mqHandler,mqSchedule); 
+
+    // fetch stories que
+    var fsSchedule = later.parse.text('every 2 min');
+    later.setInterval(fsHandler,fsSchedule); 
 
     if(APPconfig.sim.active) {
       // mqHandler();
+      fsHandler();
       // mail.sendSimStory();
     }
 
 };
 
-const mqHandler = () => {
+// const mqHandler = () => {
 
-  // check for events that don't have storydata and no message on the que and add them to the que
-  // remove adding to que from event fetching
+//   // check for events that don't have storydata and no message on the que and add them to the que
+//   // remove adding to que from event fetching
 
-  // get items from que
-  mqModel.find().limit(20).then( messages => {
+//   // get items from que
+//   mqModel.find().limit(20).then( messages => {
     
-    if(messages.length > 0) {
-      logger.info('Work on the mq to be done:' + messages.length);
+//     if(messages.length > 0) {
+//       logger.info('Work on the mq to be done:' + messages.length);
       
-      messages.forEach( msg => {
-         // switch case type later on
-         event.eventModel.findOne({'_id': msg.message.fetchStory.eventId}).then( event => {
-            story.fetchStoryDataForEvent(event);
-         });
-         msg.remove();
+//       messages.forEach( msg => {
+//          // switch case type later on
+//          event.eventModel.findOne({'_id': msg.message.fetchStory.eventId}).then( event => {
+//             story.fetchStoryDataForEvent(event);
+//          });
 
+//          // do this only after fetchStoryData Success
+//          msg.remove();
+
+//       });
+//     }
+//   });
+
+// };
+
+const fsHandler = () => {
+  // get 20 events that don't have storydata
+  eventController.findStoryLess(20).then( events => {
+    
+    if(events.length > 0) {
+
+      logger.info('Getting stories for the next 20 events.');
+      
+      events.forEach( event => {
+        storyController.fetchStoryDataForEvent(event);
       });
+    } else {
+      logger.info('Yeah! All events seem to have stories...');
     }
   });
-
 };
 
 const mailingTime = () => {

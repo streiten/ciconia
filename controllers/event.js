@@ -5,7 +5,7 @@ var moment = require('moment');
 var movebankModel = require('../models/Movebank.js');
 const animalModel = require('../models/Animal.js');
 const eventModel = require('../models/Event.js');
-const mqModel = require('../models/MessageQue.js');
+// const mqModel = require('../models/MessageQue.js');
 
 exports.eventModel = eventModel; 
 
@@ -47,6 +47,16 @@ exports.findClosest = (animalId,time) => {
 
 };
 
+exports.findStoryLess = (amount) => {
+  return eventModel.find({ 'hasStoryData' : { $exists : false } }).limit(amount);
+};
+
+exports.setHasStory = (event) => {
+    return eventModel.findOne({ "_id" : event._id } ).then((event) => {
+      event.hasStoryData = true; 
+      event.save();
+    });
+};
 
 exports.updateEvents = () => {
 
@@ -161,19 +171,18 @@ const processAndInsertEvents = (animal,events) => {
         logger.log('debug','Mongo bulk result:' + ' inserted:' + result.nInserted + ' upserted:' +result.nUpserted+ ' ,matched:' +result.nMatched+ ' modified:' +result.nModified+ ' removed:' +result.nRemoved);
 
         // putting upserted ids on the messageque for story fetching
-        var mqOps = [];
-        for (var id in result.upsertedIds) {
-            if (result.upsertedIds.hasOwnProperty(id)) {
-              var msg = { 'fetchStory' : { 'eventId' : result.upsertedIds[id]}};
-              mqOps.push( { 
-                "insertOne" : {
-                  'document' : { 'message' : msg }
-                }
-              });
-            }
-        }
-
-        mqModel.bulkWrite(mqOps).then(result => {});
+        // var mqOps = [];
+        // for (var id in result.upsertedIds) {
+        //     if (result.upsertedIds.hasOwnProperty(id)) {
+        //       var msg = { 'fetchStory' : { 'eventId' : result.upsertedIds[id]}};
+        //       mqOps.push( { 
+        //         "insertOne" : {
+        //           'document' : { 'message' : msg }
+        //         }
+        //       });
+        //     }
+        // }
+        // mqModel.bulkWrite(mqOps).then(result => {});
 
     });
   };

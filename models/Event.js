@@ -12,7 +12,8 @@ var Schema = mongoose.Schema;
 
 var eventSchema = new Schema({
   timestamp: Date,
-  animalId: Number,
+  animalId: { type : Number },
+  hasStoryData : Boolean,
   lat: Number, 
   long: Number, 
   meta: Schema.Types.Mixed,

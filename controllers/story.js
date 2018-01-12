@@ -11,9 +11,9 @@ var WHSites = require('../libs/whsites.js');
 var movebank = require('../models/Movebank.js');
 
 const animal = require('../models/Animal.js');
-const eventModel = require('../models/Event.js');
-
 var storyData = require('../models/StoryData.js');
+
+const eventController = require('../controllers/Event.js');
 
 const mjml = require('mjml');
 
@@ -33,7 +33,8 @@ exports.index = (req, res) => {
   animal.findOne({ 'id': req.params.id }).then(animal => {
 
     // get feature range startdate
-    var eventdate = moment(animal.featureDateStart);
+    var date = moment(animal.featureDateStart);
+
     var dayoffset = 0;
     // day offset ? -> clac the event to display
 
@@ -42,49 +43,24 @@ exports.index = (req, res) => {
       dayoffset = req.params.day;
 
       if( dayoffset == 'latest' ) {
-        eventdate = moment();
+        date = moment();
       } else {
-        eventdate.add(dayoffset,'day');
+        date.add(dayoffset,'day');
       }
     }
 
-    // console.log(eventdate);
-
-    //now find the closest event  -> lte doesnt work for feature start date & latest
-    eventModel.findOne( { 'animalId' : animal.id , 'timestamp': { $gte : eventdate }}).sort({"timestamp" : 1}).then( closestEvent => {
+    eventController.findClosest(animal.id,date).then( closestEvent => {
       
-      // if there is one, check if there is storyDate else getit
-      if(closestEvent) {
-        console.log(closestEvent);
-        // find last timestamp for this animals storydata available
-        storyData.findOne( { 'eventId' : closestEvent._id } ).then( story => {
-          if(story) {
-            console.log(story);
+        exports.generateStoryMarkup(closestEvent, animal ,'Alex' ).then( data => {
 
-            exports.generateStoryMarkup(moment(story.timestamp).toISOString(), animal, 'Alex' ).then( data => {
-             res.render('story', {
-                'body': data,
-                'state': eventdate.format('ll') + ' - Event: ' + moment(closestEvent.timestamp).format('llll') + '_id: ' + closestEvent._id ,
-                'prevStoryUrl' : '/story/' + animal.id + '/' + (dayoffset*1-1) ,
-                'nextStoryUrl' : '/story/' + animal.id + '/' + (dayoffset*1+1) 
-              });
-            });
-          
-          } else {
-
-            winston.log('info','No Story found. Bummer. But fetching now...');
-
-            exports.fetchStoryDataForEvent(closestEvent).then( all => {
-              console.log('... fetch done. reload/redirect now!');
-              res.redirect(req.originalUrl);
-            });
-          }
+         res.render('story', {
+            'body': data,
+            'state': date.format('ll') + ' - Event: ' + moment(closestEvent.timestamp).format('llll') + '_id: ' + closestEvent._id ,
+            'prevStoryUrl' : '/story/' + animal.id + '/' + (dayoffset*1-1) ,
+            'nextStoryUrl' : '/story/' + animal.id + '/' + (dayoffset*1+1) 
+          });
 
         });
-
-      } else {
-        winston.log('info','No event found for storybuilding.');
-      }
 
     });
     
@@ -93,186 +69,169 @@ exports.index = (req, res) => {
 };
 
 
-exports.generateStoryMarkup = ( event , username ) => {
+exports.generateStoryMarkup = ( event , animal ,username ) => {
   
   // get storyData for event, then prepare view data
-  storyData.findOne( { "eventId" : event._id } ).then( result => {
+  return storyData.findOne( { "eventId" : event._id } ).then( result => {
     
-    // if no result -> fetch data first
-    var result = parseJson(result.data);
-
-    var resultObj = {};
-    result.forEach( item => {
-      resultObj[item['key']] = item['data'] ;
-    });
-
-    console.log(resultObj);
-          
-    var markup = '';
-
-    // generateViewMarkup(result.data),
-    // generateWikipediaMarkup(result.data),
-    // generateWHSMarkup(result.data),
-    // generateStatsMarkup(result.data),
-    // generateWeatherMarkup(result.data)
-
-    var introview = {};
-
-    introview.individual = animal.name;
-    introview.name = username;
-
-    if(storyPartsObj['weather']) {
-      introview.temperature = storyPartsObj['weather'].weatherObservation.temperature;
-      introview.wind = storyPartsObj['weather'].weatherObservation.windSpeed;
-      introview.weather = storyPartsObj['weather'].weatherObservation.clouds;
+    if(result) {
+      return compileStoryDataMarkup(result.data,animal,username);
+    } else {
+      return exports.fetchStoryDataForEvent(event).then( ( result ) => {
+        return compileStoryDataMarkup(result.data,animal,username);
+      })
     }
 
-    // distance ... last spoke ? start of migration ?
-    if(storyPartsObj['stat']) {
-      console.log(storyPartsObj['stat']);
-      introview.elevation = storyPartsObj['stat'].elevation.srtm1;
-      introview.country = storyPartsObj['stat'].country.countryName;
-    }
+  });
 
-    var viewtpl = fs.readFileSync('./views/mail/intro.mjml', 'utf8');
-    markup =  mustache.render(viewtpl, introview);
+};
 
-    // compositing the story parts now
-    markup += storyPartsObj['view'] + storyPartsObj['wikipedia'] + storyPartsObj['whs'];
+const compileStoryDataMarkup = ( storyData,animal,username ) => {
 
-    // Others - loop
-    view = {
-      individuals : [
-      {
-        name: 'Joe',
-        country: 'Belarus',
-      },
-      {
-        name: 'Sepp',
-        country: 'Bavaria',
-      }
-    ]};
+   var storyData = parseJson(storyData);
 
-    var moretpl = fs.readFileSync('./views/mail/more.mjml', 'utf8');
-    markup += mustache.render(moretpl, view);
-    
-    wraptpl = fs.readFileSync('./views/mail/template.mjml', 'utf8');
-    view = { 'body' : markup };
-    mjmlmail = mustache.render(wraptpl, view);
-
-    try {
-      const { html, errors } = mjml.mjml2html( mjmlmail, { beautify: true, minify: false, level: "soft" } );
-
-      if(errors.length > 0) {
-        console.log(errors.map(e => e.formattedMessage).join('\n'))
-      }
-
-      return html;
-
-    } catch(e) {
-      if (e.getMessages) {
-          console.log(e.getMessages());
-        } else {
-          throw e;
-        }
-    }
+   // convert to object ?? needed ?
+   var storyDataObj = {};
+   storyData.forEach( item => {
+     storyDataObj[item['key']] = item['data'] ;
    });
 
+
+   var markup = '';
+   var introview = {};
+
+
+   introview.individual = animal.name;
+   introview.name = username;
+
+   if(storyDataObj['weather']) {
+     introview.temperature = storyDataObj['weather'].weatherObservation.temperature;
+     introview.wind = storyDataObj['weather'].weatherObservation.windSpeed;
+     introview.weather = storyDataObj['weather'].weatherObservation.clouds;
+   }
+
+   // distance ... last spoke ? start of migration ?
+   if(storyDataObj['stat']) {
+     introview.elevation = storyDataObj['stat'].elevation.srtm1;
+     introview.country = storyDataObj['stat'].country.countryName;
+   }
+   var viewtpl = fs.readFileSync('./views/mail/intro.mjml', 'utf8');
+   markup =  mustache.render(viewtpl, introview);
+
+
+   if(storyDataObj['view']) {
+     markup += generateViewDataMarkup(storyDataObj['view']);
+   }
+
+   if(storyDataObj['WHS']) {
+     markup += generateWHSDataMarkup(storyDataObj['WHS']);
+   }
+
+   if(storyDataObj['wikipedia']) {
+     markup += generateWikipediaDataMarkup(storyDataObj['wikipedia']);
+   }
+
+   // Others - loop
+   view = {
+     individuals : [
+     {
+       name: 'Joe',
+       country: 'Belarus',
+     },
+     {
+       name: 'Sepp',
+       country: 'Bavaria',
+     }
+   ]};
+
+   var moretpl = fs.readFileSync('./views/mail/more.mjml', 'utf8');
+   markup += mustache.render(moretpl, view);
+   
+   wraptpl = fs.readFileSync('./views/mail/template.mjml', 'utf8');
+   view = { 'body' : markup };
+   mjmlmail = mustache.render(wraptpl, view);
+
+   try {
+     const { html, errors } = mjml.mjml2html( mjmlmail, { beautify: true, minify: false, level: "soft" } );
+
+     if(errors.length > 0) {
+       console.log(errors.map(e => e.formattedMessage).join('\n'))
+     }
+
+     return html;
+
+   } catch(e) {
+     if (e.getMessages) {
+         console.log(e.getMessages());
+       } else {
+         throw e;
+       }
+   }
 };
 
-
-const generateViewDataMarkup = ( storyData ) => {
+const generateViewDataMarkup = ( itemData ) => {
         
-        // if data there...
-        if(storyData) {
-            var url = parseJson(result.json);
-            
-            var view = {
-              view_img_src: url.imgurl
-            };
+    var view = {
+      view_img_src: itemData.imgurl
+    };
+
+    var viewtpl = fs.readFileSync('./views/mail/view.mjml', 'utf8');
+    var mjmltpl =  mustache.render(viewtpl, view);
+    return mjmltpl;
         
-            var viewtpl = fs.readFileSync('./views/mail/view.mjml', 'utf8');
-            var mjmltpl =  mustache.render(viewtpl, view);
-            return mjmltpl;
-        
-        } else return null;
+};
+
+const generateWHSDataMarkup = ( itemData ) => {
+      
+    // update to loop if multiple sites ???
+    itemData = itemData[0];
+
+    var view = {
+      wh_title: itemData.site,
+      wh_body: itemData.short_description,
+      wh_img_src: itemData.ogimg_url,
+      wh_url: itemData.http_url,
+      wh_category: itemData.category
+    };
+
+    var whstpl = fs.readFileSync('./views/mail/whs.mjml', 'utf8');
+    var mjmltpl = mustache.render(whstpl, view);
+    return  mjmltpl;
 
 };
 
-const generateWHSDataMarkup = ( storyData ) => {
+const generateWikipediaDataMarkup = ( itemData ) => {
     
-      if(storyData) {
-          var data = parseJson(result.json);
+    var view = { wikis : []};
 
-          // update to loop if multiple sites ???
-          var view = {
-            wh_title: data.site,
-            wh_body: data.short_description,
-            wh_img_src: data.ogimg_url,
-            wh_url: data.http_url,
-            wh_category: data.category
-          };
+    // { summary: 'Alemdar, aka Gazi Alemdar, was a former Turkish salvage tug, which is best known for her victorious engagement with a French navy warship during the Turkish War of Independence. Built in 1898 in Denmark, the Danish-flagged vessel was seized by the Ottoman Empire during World War I (...)',
+    //        elevation: 5,
+    //        lng: 31.41616,
+    //        distance: '1.8119',
+    //        rank: 77,
+    //        lang: 'en',
+    //        title: 'Alemdar (ship)',
+    //        lat: 41.2682,
+    //        wikipediaUrl: 'en.wikipedia.org/wiki/Alemdar_%28ship%29' 
+    // }
 
-          var whstpl = fs.readFileSync('./views/mail/whs.mjml', 'utf8');
-          var mjmltpl = mustache.render(whstpl, view);
-            return  mjmltpl;
-      } else return null ;
-};
+    itemData.geonames.forEach( (wikiItem,idx) => {
 
-const generateWikipediaDataMarkup = ( storyData ) => {
-    
-        if(result) {
-            
-            var view = { wikis : []};
+      view.wikis[idx] = { 
+        "wiki_title": wikiItem.title,
+        "wiki_body": wikiItem.summary,
+        "wiki_distance": wikiItem.distance,
+        "wiki_img_src": "https://upload.wikimedia.org/wikipedia/commons/4/45/Maricopa_County_Courthouse_October_6_2013_Phoenix_Arizona_2816x2112_Rear.JPG",
+        "wiki_url": 'https://' + wikiItem.wikipediaUrl
+      };
+    });
 
-            // { summary: 'Alemdar, aka Gazi Alemdar, was a former Turkish salvage tug, which is best known for her victorious engagement with a French navy warship during the Turkish War of Independence. Built in 1898 in Denmark, the Danish-flagged vessel was seized by the Ottoman Empire during World War I (...)',
-            //        elevation: 5,
-            //        lng: 31.41616,
-            //        distance: '1.8119',
-            //        rank: 77,
-            //        lang: 'en',
-            //        title: 'Alemdar (ship)',
-            //        lat: 41.2682,
-            //        wikipediaUrl: 'en.wikipedia.org/wiki/Alemdar_%28ship%29' 
-            // }
+    wikitpl = fs.readFileSync('./views/mail/wiki.mjml', 'utf8');
+    mjmltpl = mustache.render(wikitpl, view);
 
-            result.forEach( (wikiItem,idx) => {
-
-              var wikiItemObj = parseJson(wikiItem.json);
-
-              view.wikis[idx] = { 
-                "wiki_title": wikiItemObj.title,
-                "wiki_body": wikiItemObj.summary,
-                "wiki_distance": wikiItemObj.distance,
-                "wiki_img_src": "https://upload.wikimedia.org/wikipedia/commons/4/45/Maricopa_County_Courthouse_October_6_2013_Phoenix_Arizona_2816x2112_Rear.JPG",
-                "wiki_url": 'https://' + wikiItemObj.wikipediaUrl
-              };
-            });
-
-            wikitpl = fs.readFileSync('./views/mail/wiki.mjml', 'utf8');
-            mjmltpl = mustache.render(wikitpl, view);
-
-            return  mjmltpl ;
-        } else return  null ;
+    return  mjmltpl ;
 
 };
-
-const generateWeatherDataMarkup = ( storyData ) => {
-    
-        if(result) {
-          return {"key" : "weather" , "value" : parseJson(result.json) };
-        } else return { "key" : "weather" , "value" : null };
-
-};
-
-const generateStatsDataMarkup = ( storyData ) => {
-
-        if(storyData) {
-          return {"key" : "stat" , "value" : parseJson(result.json) };
-        } else return { "key" : "stat" , "value" : null };
-
-};
-
 
 
 // get all data from external sources (and store in db locally)
@@ -323,11 +282,14 @@ exports.fetchStoryDataForEvent = ( event ) => {
         fetchWeatherData(event.lat,event.long),
         ViewDataPromise
       ]).then( data => {
-        console.log(data);
+
         data = JSON.stringify(data);
 
         return storyData
-          .findOneAndUpdate({ 'eventId' : event._id }, { '$setOnInsert' : {'animalId' : event.animalId,'eventId' : event._id, 'data' : data }},{ 'upsert':true })
+          .findOneAndUpdate({ 'eventId' : event._id }, { '$setOnInsert' : {'animalId' : event.animalId,'eventId' : event._id, 'data' : data }},{ 'upsert':true , 'new':true }).then((result) => {
+            eventController.setHasStory(event);
+            return result;
+          })
           .catch((error) => {
             console.log(error);
           });
