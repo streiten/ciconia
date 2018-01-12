@@ -13,7 +13,7 @@ var movebank = require('../models/Movebank.js');
 const animal = require('../models/Animal.js');
 var storyData = require('../models/StoryData.js');
 
-const eventController = require('./Event.js');
+const eventController = require('./event.js');
 
 const mjml = require('mjml');
 
