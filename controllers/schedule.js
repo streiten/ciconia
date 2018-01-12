@@ -34,8 +34,8 @@ exports.init = () => {
     later.setInterval(mqHandler,mqSchedule); 
 
     if(APPconfig.sim.active) {
-      mqHandler();
-      mail.sendSimStory();
+      // mqHandler();
+      // mail.sendSimStory();
     }
 
 };

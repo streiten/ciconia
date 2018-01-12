@@ -1,0 +1,29 @@
+* 1 story record for event. event id <-> story id
+* closest event to 'date' method in event model
+* story data / mq / manager worker: new events ? no story -> mq etc.
+getstorydata -> no story data -> fetchstory data moved to model 
+
+* On-boarding
+
+onboarded flase -> additional block at beginning
+hi ... remember back then ... just wanted to let you know i am on my way now.
+- Opt-in / Welcome
+
+* Off-boarding
+- Unsubscribe - Sad to see you go
+
+Ideas
+-----
+* normal stories between fakts ?
+
+Real time: next mod 3 since start ?
+
+migration start / end detection
+-- heading for couple of days in one direction
+-- distance last days more than... 20km ?
+-- review notification email to me ?
+-- store start date for overall distance
+// distance ... last spoke ? start of migration ?
+
+// getMood ??
+// interesing points around

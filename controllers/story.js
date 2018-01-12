@@ -38,6 +38,7 @@ exports.index = (req, res) => {
     // day offset ? -> clac the event to display
 
     if(req.params.day) {
+      
       dayoffset = req.params.day;
 
       if( dayoffset == 'latest' ) {
@@ -47,16 +48,19 @@ exports.index = (req, res) => {
       }
     }
 
-    //now find the closest event 
-    eventModel.findOne( { 'animalId' : animal.id , 'timestamp': { $lte : eventdate }}).sort({"timestamp" : 1}).then( closestEvent => {
+    console.log(eventdate);
+
+    //now find the closest event  -> lte doesnt work for feature start date & latest
+    eventModel.findOne( { 'animalId' : animal.id , 'timestamp': { $gte : eventdate }}).sort({"timestamp" : 1}).then( closestEvent => {
       
       // if there is one, check if there is storyDate else getit
       if(closestEvent) {
-        
+        console.log(closestEvent);
         // find last timestamp for this animals storydata available
         storyData.findOne( { 'eventId' : closestEvent._id } ).then( story => {
           if(story) {
-            
+            console.log(story);
+
             exports.generateStoryMarkup(moment(story.timestamp).toISOString(), animal, 'Alex' ).then( data => {
              res.render('story', {
                 'body': data,
@@ -267,6 +271,7 @@ exports.generateStoryMarkup = ( timestamp , animal , username ) => {
 
         // distance ... last spoke ? start of migration ?
         if(storyPartsObj['stat']) {
+          console.log(storyPartsObj['stat']);
           introview.elevation = storyPartsObj['stat'].elevation.srtm1;
           introview.country = storyPartsObj['stat'].country.countryName;
         }
@@ -316,63 +321,63 @@ exports.generateStoryMarkup = ( timestamp , animal , username ) => {
        });
 };
 
-// get all data from external sources (and store in db locally)
-const fetchStoryData = ( event,animal ) => {
+// // get all data from external sources (and store in db locally)
+// const fetchStoryData = ( event,animal ) => {
 
-    fetchViewData(event.lat,event.long).then( data => {
+//     fetchViewData(event.lat,event.long).then( data => {
       
-      data = JSON.stringify(data);
-      storyData
-        .findOneAndUpdate({"timestamp": event.timestamp , 'type' : 'view', 'animalId' : animal.id }, { '$setOnInsert' : { 'eventId' : event._id, 'json': data }},{ 'upsert':true })
-        .catch((error) => {
-          console.log(error);
-        });
-    });
+//       data = JSON.stringify(data);
+//       storyData
+//         .findOneAndUpdate({"timestamp": event.timestamp , 'type' : 'view', 'animalId' : animal.id }, { '$setOnInsert' : { 'eventId' : event._id, 'json': data }},{ 'upsert':true })
+//         .catch((error) => {
+//           console.log(error);
+//         });
+//     });
     
-    fetchWeatherData(event.lat,event.long).then( data => {
-      if(data) { 
-        data = JSON.stringify(data);
-        storyData
-          .findOneAndUpdate({"timestamp": event.timestamp , 'type' : 'weather', 'animalId' : animal.id }, { '$setOnInsert' : {'eventId' : event._id, 'json' : data }},{ 'upsert':true })
-          .catch((error) => {
-            console.log(error);
-          });
-      };
-    });
+//     fetchWeatherData(event.lat,event.long).then( data => {
+//       if(data) { 
+//         data = JSON.stringify(data);
+//         storyData
+//           .findOneAndUpdate({"timestamp": event.timestamp , 'type' : 'weather', 'animalId' : animal.id }, { '$setOnInsert' : {'eventId' : event._id, 'json' : data }},{ 'upsert':true })
+//           .catch((error) => {
+//             console.log(error);
+//           });
+//       };
+//     });
     
-    fetchWikipediaData(event.lat,event.long,1).then( data => {
-      if(data) { 
-        data = JSON.stringify(data); 
-        storyData
-          .findOneAndUpdate({"timestamp": event.timestamp , 'type' : 'wikipedia', 'animalId' : animal.id }, { '$setOnInsert' : {'eventId' : event._id, 'json' : data }},{ 'upsert':true })
-          .catch((error) => {
-            console.log(error);
-          });
-      }
-    });
+//     fetchWikipediaData(event.lat,event.long,1).then( data => {
+//       if(data) { 
+//         data = JSON.stringify(data); 
+//         storyData
+//           .findOneAndUpdate({"timestamp": event.timestamp , 'type' : 'wikipedia', 'animalId' : animal.id }, { '$setOnInsert' : {'eventId' : event._id, 'json' : data }},{ 'upsert':true })
+//           .catch((error) => {
+//             console.log(error);
+//           });
+//       }
+//     });
     
-    fetchWHSData(event.lat,event.long,1).then( data => {
-      if(data[0]) { 
-        data = JSON.stringify(data[0]);
-        storyData
-          .findOneAndUpdate({"timestamp": event.timestamp , 'type' : 'whs', 'animalId' : animal.id }, { '$setOnInsert' : {'eventId' : event._id, 'json' : data }},{ 'upsert':true })
-          .catch((error) => {
-            console.log(error);
-          });
-      }
-    });
+//     fetchWHSData(event.lat,event.long,1).then( data => {
+//       if(data[0]) { 
+//         data = JSON.stringify(data[0]);
+//         storyData
+//           .findOneAndUpdate({"timestamp": event.timestamp , 'type' : 'whs', 'animalId' : animal.id }, { '$setOnInsert' : {'eventId' : event._id, 'json' : data }},{ 'upsert':true })
+//           .catch((error) => {
+//             console.log(error);
+//           });
+//       }
+//     });
 
-    fetchStatData(event).then( data => {
-      if(data) { 
-        data = JSON.stringify(data);
-        storyData
-          .findOneAndUpdate({"timestamp": event.timestamp , 'type' : 'stat', 'animalId' : animal.id }, { '$setOnInsert' : {'eventId' : event._id, 'json' : data }},{ 'upsert':true })
-          .catch((error) => {
-            console.log(error);
-          });
-      }
-    });
-};
+//     fetchStatData(event).then( data => {
+//       if(data) { 
+//         data = JSON.stringify(data);
+//         storyData
+//           .findOneAndUpdate({"timestamp": event.timestamp , 'type' : 'stat', 'animalId' : animal.id }, { '$setOnInsert' : {'eventId' : event._id, 'json' : data }},{ 'upsert':true })
+//           .catch((error) => {
+//             console.log(error);
+//           });
+//       }
+//     });
+// };
 
 // get all data from external sources (and store in db locally)
 exports.fetchStoryDataForEvent = ( event ) => {
@@ -689,6 +694,9 @@ const fetchStatData = function (event) {
         items.forEach( item => {
           statobj[item['key']] = item['value'] ;
         });
+        
+        // console.log(statobj);
+        
         return statobj;
       
       });
