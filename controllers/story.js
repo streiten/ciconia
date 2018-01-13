@@ -51,10 +51,13 @@ exports.index = (req, res) => {
 
     eventController.findClosest(animal.id,date).then( closestEvent => {
       
-        exports.generateStoryMarkup(closestEvent, animal ,'Alex' ).then( data => {
+        exports.generateStoryMarkup(closestEvent, animal).then( htmlbody => {
+
+        view = { 'username' : 'Debugger' };
+        htmlbody = mustache.render(htmlbody, view);
 
          res.render('story', {
-            'body': data,
+            'body': htmlbody,
             'state': date.format('ll') + ' - Event: ' + moment(closestEvent.timestamp).format('llll') + '_id: ' + closestEvent._id ,
             'prevStoryUrl' : '/story/' + animal.id + '/' + (dayoffset*1-1) ,
             'nextStoryUrl' : '/story/' + animal.id + '/' + (dayoffset*1+1) 
@@ -79,14 +82,14 @@ exports.generateStoryMarkup = ( event , animal ,username ) => {
     } else {
       return exports.fetchStoryDataForEvent(event).then( ( result ) => {
         return compileStoryDataMarkup(result.data,animal,username);
-      })
+      });
     }
 
   });
 
 };
 
-const compileStoryDataMarkup = ( storyData,animal,username ) => {
+const compileStoryDataMarkup = ( storyData,animal ) => {
 
    var storyData = parseJson(storyData);
 
@@ -100,9 +103,7 @@ const compileStoryDataMarkup = ( storyData,animal,username ) => {
    var markup = '';
    var introview = {};
 
-
    introview.individual = animal.name;
-   introview.name = username;
 
    if(storyDataObj['weather']) {
      introview.temperature = storyDataObj['weather'].weatherObservation.temperature;
@@ -115,6 +116,7 @@ const compileStoryDataMarkup = ( storyData,animal,username ) => {
      introview.elevation = storyDataObj['stat'].elevation.srtm1;
      introview.country = storyDataObj['stat'].country.countryName;
    }
+
    var viewtpl = fs.readFileSync('./views/mail/intro.mjml', 'utf8');
    markup =  mustache.render(viewtpl, introview);
 
@@ -123,7 +125,7 @@ const compileStoryDataMarkup = ( storyData,animal,username ) => {
      markup += generateViewDataMarkup(storyDataObj['view']);
    }
 
-   if(storyDataObj['WHS']) {
+   if(storyDataObj['WHS'].length > 0) {
      markup += generateWHSDataMarkup(storyDataObj['WHS']);
    }
 
@@ -132,17 +134,19 @@ const compileStoryDataMarkup = ( storyData,animal,username ) => {
    }
 
    // Others - loop
-   view = {
-     individuals : [
-     {
-       name: 'Joe',
-       country: 'Belarus',
-     },
-     {
-       name: 'Sepp',
-       country: 'Bavaria',
-     }
-   ]};
+   // view = {
+   //   individuals : [
+   //   {
+   //     name: 'Joe',
+   //     country: 'Belarus',
+   //   },
+   //   {
+   //     name: 'Sepp',
+   //     country: 'Bavaria',
+   //   }
+   // ]};
+
+   view = { 'individual' : animal.name };
 
    var moretpl = fs.readFileSync('./views/mail/more.mjml', 'utf8');
    markup += mustache.render(moretpl, view);
@@ -155,7 +159,7 @@ const compileStoryDataMarkup = ( storyData,animal,username ) => {
      const { html, errors } = mjml.mjml2html( mjmlmail, { beautify: true, minify: false, level: "soft" } );
 
      if(errors.length > 0) {
-       console.log(errors.map(e => e.formattedMessage).join('\n'))
+       console.log(errors.map(e => e.formattedMessage).join('\n'));
      }
 
      return html;
@@ -182,7 +186,7 @@ const generateViewDataMarkup = ( itemData ) => {
 };
 
 const generateWHSDataMarkup = ( itemData ) => {
-      
+
     // update to loop if multiple sites ???
     itemData = itemData[0];
 

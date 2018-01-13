@@ -1,7 +1,7 @@
 <mjml>
 
   <mj-head>
-    <mj-title>CICONIA</mj-title>
+    <mj-title>BIRD INSTITUTE</mj-title>
     <mj-font name="Roboto" href="https://fonts.googleapis.com/css?family=Roboto:300,500" />
 
     <mj-attributes>
@@ -20,11 +20,12 @@
           <mj-image align="left" padding="3px 0 0 0" width="16px" href="https://bird.institute" src="http://localhost:8888/favicon.png" />
         </mj-column>
         <mj-column width="77%">
-          <mj-text font-size="16px" line-height="24px">CICONIA</mj-text>
+          <mj-text font-size="16px" line-height="24px">
+            <a href="https://bird.institute" style="color: #000;">BIRD INSTITUTE</a> 
+          </mj-text>
         </mj-column>
         <mj-column width="20%">
-          <mj-text align="right" font-size="10px" line-height="24px"><a href="{{ url }}" style="color: #616161;">
-              View in browser</a> </mj-text>
+          <mj-text align="right" font-size="16px" line-height="24px"> CICONIA </mj-text>
         </mj-column>
       </mj-section>
 
@@ -35,11 +36,11 @@
           <mj-image align="left" padding="3px 0 0 0" width="16px" href="https://bird.institute" src="http://localhost:8888/favicon.png" />
         </mj-column>
         <mj-column width="37%">
-          <mj-text font-size="16px"  line-height="24px">CICONIA</mj-text>
+          <mj-text font-size="16px"  line-height="24px">BIRD INSTITUTE - CICONIA</mj-text>
         </mj-column>
         <mj-column width="60%">
           <mj-text align="right" font-size="10px" line-height="24px">
-            You subscribed <a href="{{ url }}" style="color: #000;">here</a>. <a href="{{ url }}" style="color: #000;">Unsubsribe</a> 
+            <a href="{{=<% %>=}}{{ unsubscribe }}<%={{ }}=%>" style="color: #000;">Unsubscribe</a> 
           </mj-text>
         </mj-column>
       </mj-section>

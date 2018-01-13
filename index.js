@@ -53,6 +53,8 @@ app.get('/story/:id/',storyController.index);
 
 app.get('/user/',userController.index);
 app.get('/user/confirm/:hash',userController.confirm);
+app.get('/user/unsubscribe/:hash',userController.unsubscribe);
+
 
 // Websockets
 io.on('connection', function (socket) {

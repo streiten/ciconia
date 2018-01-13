@@ -22,12 +22,8 @@ exports.init = () => {
 
     // mailing
     var mailschedule = later.parse.text('at 11:00 am');
-    // var mailschedule = later.parse.text('every 10 seconds');   
-    // later.setInterval(mailingTime,mailschedule);
+    later.setInterval(mailingTime,mailschedule);
     
-    // checking for new events
-    eventController.updateEvents();
-
     var eventUpdateSchedule = later.parse.text('every 2 hour');
     later.setInterval(eventController.updateEvents,eventUpdateSchedule); 
 
@@ -41,8 +37,12 @@ exports.init = () => {
 
     if(APPconfig.sim.active) {
       // mqHandler();
-      fsHandler();
+      // fsHandler();
       // mail.sendSimStory();
+      // eventController.updateEvents();
+
+      mail.sendSimStory();
+
     }
 
 };
@@ -94,7 +94,6 @@ const mailingTime = () => {
 
   // send stories
   mail.sendStory();
-
   if(APPconfig.sim.active) {
     mail.sendSimStory();
   }

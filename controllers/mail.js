@@ -9,11 +9,10 @@ const mjml = require('mjml');
 
 const userModel = require('../models/User.js');
 const animalModel = require('../models/Animal.js');
-const eventModel = require('../models/Event.js');
-
-const storyDataModel = require('../models/StoryData.js');
 
 const storyController = require('./story.js');
+const eventController = require('./event.js');
+
 
 const nodemailer = require('nodemailer');
 
@@ -64,12 +63,10 @@ exports.sendOptIn = (user) => {
         var data = {
           "animal" : { "name" : "Kerk" },
           "hash" : user.hash
-        }
+        };
 
         var htmlbody = exports.generateOptInMailMarkup(data);
-
         send('Bird Institute',user.email,'Please confirm your subscription',htmlbody);
-
 
 };
 
@@ -102,26 +99,34 @@ exports.generateOptInMailMarkup = ( data ) => {
 
 };
 
+
+
 exports.sendStory = () => {
 
   // all active animals
   animalModel.find( { 'active': true } ).then( animals => {
       // each animal 
       animals.forEach( animal => {
-        // find latest storydata for animal 
-        storyDataModel.findOne({ animalId : animal.id }).sort({ 'timestamp': -1 }).then( lastStory => {
-          // generat email markup
 
-          var ts = moment(lastStory.timestamp).toISOString();
-          console.log(animal.name, 'last storydata ts:', ts);
+        // find closest event for animal 
+        eventController.findClosest(animal.id,moment()).then( closestEvent => {
 
-          story.generateStoryMarkup(ts, animal, 'Alex' ).then( htmlbody => {
+          storyController.generateStoryMarkup(closestEvent, animal ).then( template => {
+    
             // find all active subscribers
             userModel.find({ active: true }).then(users => {
+
+              // ToDo: Mustache in subscriber specific data like name und unsub
+
               // send each one the email
               users.forEach( user => {
+                var unsubUrl = APPconfig.baseurl + 'user/unsubscribe/' + user.hash;
+                view = { 'username' : user.email , 'unsubscribe' : unsubUrl };
+                htmlbody = mustache.render(template, view);
+
                 send('Bird Institute',user.email,'Krawh! News from '+ animal.name,htmlbody);
               });
+
             });
         });
       });
@@ -137,7 +142,7 @@ exports.sendSimStory = () => {
   winston.log( 'info','+++ Send simulated migration story with days offset ' +  simDayOffset + ' +++' );
 
   // all active animals that have a start/feature date in the past
-  animalModel.find({ "active": true , featureDateStart : { $lte : new Date() } } ).then( animals => { 
+  animalModel.find({ "active": true , featureDateStart : { $lt : new Date() } } ).then( animals => { 
       
       // each animal 
       animals.forEach( animal => {
@@ -147,65 +152,42 @@ exports.sendSimStory = () => {
         eventdate.add(simDayOffset,'day');
         
         //now find the closest event 
-        eventModel.findOne( { 'animalId' : animal.id , 'timestamp': { $gte : eventdate }}).sort({"timestamp" : 1}).then( closestEvent => {
+        eventController.findClosest(animal.id,eventdate).then( closestEvent => {
           
-          // if there is one, check if there is storyData
-          if(closestEvent) {
-
-            // is the event found within the feature range, otherwise skip
             // console.log('startdate ts:',moment(animal.featureDateStart));
             // console.log('enddate ts:',moment(animal.featureDateEnd));
             // console.log('event ts:',moment(closestEvent.timestamp));
 
+            // is the event found within the feature range, otherwise skip the whole thing
             if(moment(closestEvent.timestamp).isBefore(moment(animal.featureDateEnd))) {
             
               winston.log( 'info','Closest event in DB for ' + animal.name + ' is on ' + closestEvent.timestamp );        
-              
-              // find storydata for last event otherwise fetch it ( fetch it... should be moved to model for global use)
-              storyDataModel.findOne( { 'eventId' : closestEvent._id } ).then( story => {
+              winston.log('info','Sending mail for ' + animal.name + ' event on ' + eventdate.format('LL') + '...'); 
+
+              // ToDo: Mustache in subscriber specific data like name und unsub
+
+              storyController.generateStoryMarkup(closestEvent, animal ).then( template => {
+
+              // find all active subscribers
+              userModel.find({ active: true }).then(users => {
                 
+                // send each one the email
+                users.forEach( user => {
+                  
+                  var unsubUrl = APPconfig.baseurl + 'user/unsubscribe/' + user.hash;
+                  view = { 'username' : user.email , 'unsubscribe' : unsubUrl };
+                  htmlbody = mustache.render(template, view);
 
-                if(story) {
-
-                  winston.log('info','Sending mail for ' + animal.name + ' event on ' + eventdate.format('LL') + '...');        
-                  storyController.generateStoryMarkup(moment(story.timestamp).toISOString(), animal, 'Alex' ).then( data => {
-
-                  // find all active subscribers
-                  userModel.find({ active: true }).then(users => {
-                    
-                    // send each one the email
-                    users.forEach( user => {
-                      send('Bird Institute',user.email,'Krawh!  +++ simulated +++ update from '+ animal.name +' for ' + eventdate.format('LL')  ,data);
-                    });
-
-                  });
-
-                   // res.render('story', {
-                   //    'body': data,
-                   //    'state': eventdate.format('ll') + ' - Event: ' + moment(closestEvent.timestamp).format('llll') + '_id: ' + closestEvent._id ,
-                   //    'prevStoryUrl' : '/story/' + animal.id + '/' + (dayoffset*1-1) ,
-                   //    'nextStoryUrl' : '/story/' + animal.id + '/' + (dayoffset*1+1) 
-                   //  });
-
-                  });
-                
-                } else {
-
-                  winston.log('info','No StoryData found for ' + animal.name + ' Bummer. Assume this will never happen as everything in DB.');
-
-                  // exports.fetchStoryDataForEvent(closestEvent).then( all => {
-                  //   // do the mailing/markup building now
-                  // });
-                }
+                  send('Bird Institute',user.email,'Krawh!  +++ simulated +++ update from '+ animal.name +' for ' + eventdate.format('LL')  ,htmlbody);
+                });
 
               });
-                          
+
+              });
+                                          
             } else {
               winston.log('info','For ' + animal.name + ' it is out of featured date range...');
             }
-          } else {
-            winston.log('info','sendSimStory: No event found for storybuilding.');
-          }
 
         });
 

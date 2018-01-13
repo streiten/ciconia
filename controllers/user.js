@@ -77,3 +77,31 @@ exports.confirm = (req,res) => {
   
   });
 };
+
+exports.unsubscribe = (req,res) => {
+  
+  User.findOne({ "hash" : req.params.hash }).then( user => {
+    
+    var msg = '';
+    if(user) {
+
+      if(user.active) {
+        user.active = false;
+        user.save();
+        msg = 'You are unsubscribed now. Come back any time you like of course!';
+      } else {
+        msg = "You are unsubscribed already. No worries no more mail from us. Promise!"; 
+      }
+
+    } else {
+      msg = 'Bye bye.';    
+    }
+
+    res.render('unsub', {
+         "msg" : msg
+    });
+
+  
+  });
+};
+

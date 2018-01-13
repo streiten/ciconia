@@ -1,10 +1,7 @@
 <mj-section>
   <mj-column width="100%">
     <mj-text>
-      <p>Wait! There is more out there. Follow others in diffrent parts of the world.</p>
-      {{#individuals}}  
-      <p><b>{{name}}</b> currently in {{country}}</p>
-      {{/individuals}}
+      <p>See you soon, take care!<br> Yours {{=<% %>=}}{{ individual }}<%={{ }}=%></p>
     </mj-text>
   </mj-column>
 </mj-section>

@@ -7,7 +7,6 @@
     <mj-text>
       <p>{{ wh_body }}</p>
       <p>Awesome, isn't it ?!</p>
-      <p>See you soon, take care.<br> Yours {{ individual }}</p>
     </mj-text>
   </mj-column>
 </mj-section>
