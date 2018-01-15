@@ -267,6 +267,8 @@ exports.fetchStoryDataForEvent = ( event ) => {
           }
         });
 
+        // on sucess replace URL with local IMG
+
         return { 'key' : 'view' , 'data' : data };
 
 
