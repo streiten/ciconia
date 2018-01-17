@@ -242,43 +242,40 @@ const generateWikipediaDataMarkup = ( itemData ) => {
 exports.fetchStoryDataForEvent = ( event ) => {
     
     // console.log('Fetching for', event);
-    var animalDir = 'data/' + event.animalId;
+    // var animalDir = 'data/' + event.animalId;
     
-    if (!fs.existsSync(animalDir)){
-        fs.mkdirSync(animalDir);
-    }
+    // if (!fs.existsSync(animalDir)){
+    //     fs.mkdirSync(animalDir);
+    // }
 
     var ViewDataPromise = fetchViewData(event.lat,event.long).then( data => {
       
       // now save the file to disk
-      var options = { 
-          "url" : data.imgurl,
-          "encoding":"binary"
-      };
+      // var options = { 
+      //     "url" : data.imgurl,
+      //     "encoding":"binary"
+      // };
 
-      data.localPath = 'data/'+event.animalId+'/'+event.animalId +'-'+ moment(event.timestamp).valueOf() + '.jpg';
+      // data.localPath = 'data/'+event.animalId+'/'+event.animalId +'-'+ moment(event.timestamp).valueOf() + '.jpg';
 
-      var mapImageSave = request(options).then( body  => {
+      // var mapImageSave = request(options).then( body  => {
 
-        var writeTo = 'data/'+event.animalId+'/'+event.animalId +'-'+ moment(event.timestamp).valueOf() + '.jpg';
-        fs.writeFile(writeTo, body, 'binary', function (err) {
-          if(err) {
-            winston.log('error',err);
-          }
-        });
+      //   var writeTo = 'data/'+event.animalId+'/'+event.animalId +'-'+ moment(event.timestamp).valueOf() + '.jpg';
+      //   fs.writeFile(writeTo, body, 'binary', function (err) {
+      //     if(err) {
+      //       winston.log('error',err);
+      //     }
+      //   });
+      // on sucess replace URL with local IMG
+      return { 'key' : 'view' , 'data' : data };
 
-        // on sucess replace URL with local IMG
-
-        return { 'key' : 'view' , 'data' : data };
-
-
-      }).catch(err =>  {
-        winston.log('error',err);
-      });
+      // }).catch(err =>  {
+      //   winston.log('error',err);
+      // });
       
-      return mapImageSave;
+      // return mapImageSave;
         
-    });
+      });
   
     // return Promise all fetches
     return Promise.all([
