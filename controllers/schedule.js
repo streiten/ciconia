@@ -40,8 +40,7 @@ exports.init = () => {
       // fsHandler();
       // mail.sendSimStory();
       // eventController.updateEvents();
-
-      mail.sendSimStory();
+      // mail.sendSimStory();
 
     }
 
