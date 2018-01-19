@@ -17,7 +17,7 @@
 
       <mj-section padding="20px 0">
         <mj-column width="3%">
-          <mj-image align="left" padding="3px 0 0 0" width="16px" href="https://bird.institute" src="http://app.bird.institute/favicon.png" />
+          <mj-image align="left" padding="3px 0 0 0" width="16px" href="https://bird.institute" src="http://app.bird.institute/static/favicon.png" />
         </mj-column>
         <mj-column width="77%">
           <mj-text font-size="16px" line-height="24px">
@@ -33,7 +33,7 @@
 
       <mj-section padding="20px 0">
         <mj-column width="3%">
-          <mj-image align="left" padding="3px 0 0 0" width="16px" href="https://bird.institute" src="http://app.bird.institute/favicon.png" />
+          <mj-image align="left" padding="3px 0 0 0" width="16px" href="https://bird.institute" src="http://app.bird.institute/static/favicon.png" />
         </mj-column>
         <mj-column width="37%">
           <mj-text font-size="16px"  line-height="24px">BIRD INSTITUTE - CICONIA</mj-text>
