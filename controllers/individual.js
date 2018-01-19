@@ -5,7 +5,7 @@ var sphereKnn = require("sphere-knn");
 var movebank = require('../models/Movebank.js');
 const animal = require('../models/Animal.js');
 
-const eventController = require('./Event.js');
+const eventController = require('./event.js');
 
 var turf = require('@turf/turf');
 
