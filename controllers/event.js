@@ -58,7 +58,7 @@ exports.geoJsonPoints = (events) => {
 
   console.log('first for jsonify',events[0]);
   var points = events.map((event)=> {
-      return turf.point([event.long , event.lat], event );
+      return turf.point([event.long , event.lat]);
     }
   );
   var collection = turf.featureCollection(points);
