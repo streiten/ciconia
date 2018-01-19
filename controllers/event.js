@@ -50,7 +50,6 @@ exports.findClosest = (animalId,time) => {
 
 exports.find = (animalId,start,end,options) => {
     var events = eventModel.find({ 'animalId' : animalId , timestamp : { '$gte' : new Date(start), '$lte' : new Date(end)} }).sort({'timestamp':-1});
-    console.log('Events found:',events.length);
     return events;
 };
 
