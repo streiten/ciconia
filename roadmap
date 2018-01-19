@@ -1,10 +1,10 @@
+* overview with last events
+
+
 * On-boarding
 - Opt-in / Welcome
 onboarded flase -> additional block at beginning on first mailing
 "hi ... remember back then ... just wanted to let you know i am on my way now."
-
-* local satelite image storage
-
 
 
 Ideas
@@ -32,3 +32,4 @@ DONE
 * getstorydata -> no story data -> fetchstory data moved to model - 
 * username added after everyhing else - templating the template
 * Unsubscribe insert hash in footer
+* overview with marker

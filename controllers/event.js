@@ -1,6 +1,7 @@
 var fs = require('fs');
 var logger = require('./logger.js');
 var moment = require('moment');
+var turf = require('@turf/turf');
 
 var movebankModel = require('../models/Movebank.js');
 const animalModel = require('../models/Animal.js');
@@ -46,6 +47,25 @@ exports.findClosest = (animalId,time) => {
     return resultPromise;
 
 };
+
+exports.find = (animalId,start,end,options) => {
+    var events = eventModel.find({ 'animalId' : animalId , timestamp : { '$gte' : new Date(start), '$lte' : new Date(end)} }).sort({'timestamp':-1});
+    return events;
+};
+
+
+exports.geoJsonPoints = (events) => {
+
+  // console.log(events);
+  var points = events.map((event)=> {
+      return turf.point([event.long , event.lat], event );
+    }
+  );
+  var collection = turf.featureCollection(points);
+  return collection;
+
+};
+
 
 exports.findStoryLess = (amount) => {
   return eventModel.find({ 'hasStoryData' : { $exists : false } }).limit(amount);

@@ -5,6 +5,8 @@ var sphereKnn = require("sphere-knn");
 var movebank = require('../models/Movebank.js');
 const animal = require('../models/Animal.js');
 
+const eventController = require('./Event.js');
+
 var turf = require('@turf/turf');
 
 // var animal = require('./libs/animal.js');
@@ -34,6 +36,7 @@ exports.index = (req, res) => {
 exports.updateLastEvent = (animalId,socket) => {
 
   animal.findOne( { 'id': animalId } ).then( animal => {
+
     // instead use last found in local event table ... TBD
     movebank.getIndividualsEvents(animal.studyId,animal.id,false,false,1).then( data => {
       var events = data.individuals[0].locations;
@@ -63,40 +66,14 @@ exports.getMapData = (reqData,socket) => {
       reqData.end = animal.featureDateEnd;
     }
 
-    movebank.getIndividualsEvents(reqData.ids.sid,reqData.ids.id,moment(reqData.start),moment(reqData.end)).then( data => {
-
-      // TBD: needs empty result handling !!! 
-      // 
-      var events = data.individuals[0].locations; // .map( event => {
-        
-      //   //console.log(event.timestamp);
-      //   event.timestamp = moment(event.timestamp).format("llll");
-      //   //console.log(moment(event.timestamp).format("llll"));
-      //   return event;
-      // });
-
-      events.reverse();
-      socket.emit('mapData',geoJSONify(events));
-
+    eventController.find(animal.id,reqData.start,reqData.end).then( events => {  
+      socket.emit('mapData',eventController.geoJsonPoints(events));
     });
 
   });
-
-};
-
-const geoJSONify = (events) => {
-  
-  // console.log(events);
-  
-  var points = events.map((event)=> {
-      return turf.point([event.location_long , event.location_lat], event );
-    }
-  );
-  var collection = turf.featureCollection(points);
-
-  return collection;
   
 };
+
 
 const calculateDistance = (waypoints) => {
   
@@ -118,6 +95,3 @@ const calculateDistance = (waypoints) => {
   return Math.round(distance);
 }
 
-const getFeatureDate = (individualId) => {
-  
-};

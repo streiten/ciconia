@@ -133,6 +133,10 @@ const compileStoryDataMarkup = ( storyData,animal ) => {
      markup += generateWikipediaDataMarkup(storyDataObj['wikipedia']);
    }
 
+   if(storyDataObj['location']) {
+     markup += generateLocationDataMarkup(storyDataObj['location']);
+   }
+
    // Others - loop
    // view = {
    //   individuals : [
@@ -181,6 +185,18 @@ const generateViewDataMarkup = ( itemData ) => {
 
     var viewtpl = fs.readFileSync('./views/mail/view.mjml', 'utf8');
     var mjmltpl =  mustache.render(viewtpl, view);
+    return mjmltpl;
+        
+};
+
+const generateLocationDataMarkup = ( itemData ) => {
+        
+    var view = {
+      location_img_src: itemData.imgurl
+    };
+
+    var viewtpl = fs.readFileSync('./views/mail/location.mjml', 'utf8');
+    var mjmltpl = mustache.render(viewtpl, view);
     return mjmltpl;
         
 };
@@ -283,7 +299,8 @@ exports.fetchStoryDataForEvent = ( event ) => {
         fetchWHSData(event.lat,event.long,1),
         fetchWikipediaData(event.lat,event.long,1),
         fetchWeatherData(event.lat,event.long),
-        ViewDataPromise
+        ViewDataPromise,
+        fetchLocationData(event.lat,event.long)
       ]).then( data => {
 
         data = JSON.stringify(data);
@@ -305,7 +322,7 @@ exports.fetchStoryDataForEvent = ( event ) => {
 const fetchViewData = function(lat,long) {
   
   var mbc = new MapboxClient(APPconfig.mapbox.accesstoken);
-  var satteliteImageUrl = mbc.getStaticURL('streitenorg', APPconfig.mapbox.mapstyle, 1280, 720, {
+  var satteliteImageUrl = mbc.getStaticURL('streitenorg', APPconfig.mapbox.viewmapstyle, 1280, 720, {
     longitude: long,
     latitude: lat,
     zoom: 15
@@ -319,6 +336,34 @@ const fetchViewData = function(lat,long) {
     resolve( { "imgurl" : satteliteImageUrl } );
   });
 }; 
+
+const fetchLocationData = function(lat,long) {
+  
+  var mbc = new MapboxClient(APPconfig.mapbox.accesstoken);
+  var encodedIconURL = encodeURIComponent('http://app.bird.institute/static/favicon.png');
+
+  var imageUrl = mbc.getStaticURL('streitenorg', APPconfig.mapbox.locationmapstyle, 1280, 720, {
+    longitude: long,
+    latitude: lat,
+    zoom: 5,
+  }, {
+    markers: [{ 'longitude': long, 'latitude': lat , 'url' : encodedIconURL }],
+    attribution: false,
+    retina: true,
+    logo: false
+  });
+
+  // fixing the custom url for marker
+  var replaceString = "url-" + encodedIconURL;
+  imageUrl = imageUrl.replace('pin-l-circle',replaceString);
+  
+  return new Promise((resolve,reject) => {
+
+    resolve( { 'key' : 'location' , 'data' : { "imgurl" : imageUrl } } );
+
+  });
+}; 
+
 
 // const fetchPlaces = function(latitude,longitude,count) {
 //   return this.geonames.findNearbyPlaceName( { lat :latitude, lng:longitude, maxRows: count}); //get continents
