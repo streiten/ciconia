@@ -50,13 +50,14 @@ exports.findClosest = (animalId,time) => {
 
 exports.find = (animalId,start,end,options) => {
     var events = eventModel.find({ 'animalId' : animalId , timestamp : { '$gte' : new Date(start), '$lte' : new Date(end)} }).sort({'timestamp':-1});
+    console.log('Events found:',events.length);
     return events;
 };
 
 
 exports.geoJsonPoints = (events) => {
 
-  // console.log(events);
+  console.log('first for jsonify',events[0]);
   var points = events.map((event)=> {
       return turf.point([event.long , event.lat], event );
     }
