@@ -53,6 +53,17 @@ exports.updateLastEvent = (animalId,socket) => {
 
 };
 
+exports.setIndividualStatus = (status,animalId,socket) => {
+  
+  var updateVals = { $set : { 'active' : status }}; 
+
+  animal.findOneAndUpdate( { 'id': animalId } , updateVals ).then( animal => {
+      socket.emit('individualStatus',{ 'id' : animalId, 'active': [status] });
+  });
+
+};
+
+
 
 exports.getMapData = (reqData,socket) => {
 
@@ -67,7 +78,7 @@ exports.getMapData = (reqData,socket) => {
     }
 
     eventController.find(animal.id,reqData.start,reqData.end).then( events => {
-      console.log('Events found:',events.length);
+      // console.log('Events found:',events.length);
       socket.emit('mapData',eventController.geoJsonPoints(events));
     });
 

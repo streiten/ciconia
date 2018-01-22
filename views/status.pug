@@ -32,6 +32,8 @@ block content
                 td
                   a(href='/individual/' + individual.id ) View Details <br>
                   a(href='/story/' + individual.id ).generate-content View story <br>
+                  a(href='/story/' + individual.id data-animalid=individual.id ).setIndividualStatus-deactivate Deactivate <br>
+
                   //- a(href='#' data-animalid=individual.id).update-story-data Update story data <br>
 
         h3 Inactive
@@ -55,8 +57,9 @@ block content
                    i.fa.fa-refresh                
                 td
                   a(href='/individual/' + individual.id ) View Details <br>
-                  a(href='/story/' + individual.id ).generate-content View current story <br>
-                  - var animalId = individual.id
+                  a(href='/story/' + individual.id ).generate-content View story <br>
+                  a(href='/story/' + individual.id data-animalid=individual.id ).setIndividualStatus-activate Activate <br>
+
     
     script.
       $(document).ready(function() {
@@ -68,6 +71,10 @@ block content
           $('*[data-animalid="' + data.id + '"]').parent().find('.lastEventDate').html(ts);
         });
 
+        socket.on('individualStatus', data => {
+          window.location.href = '/status';
+        });
+
         $('.update-story-data').on('click',function(e){
           e.preventDefault();
           socket.emit('updateStoryData', { 'id': $(this).data("animalid")  } );
@@ -76,6 +83,16 @@ block content
         $('.update-lastEventAt').on('click',function(e){
           e.preventDefault();
           socket.emit('updateLastEvent', { 'id': $(this).data('animalid')  } );
+        });
+
+        $('.setIndividualStatus-activate').on('click',function(e){
+          e.preventDefault();
+          socket.emit('activateIndividual', { 'id': $(this).data('animalid')  } );
+        });
+
+        $('.setIndividualStatus-deactivate').on('click',function(e){
+          e.preventDefault();
+          socket.emit('deactivateIndividual', { 'id': $(this).data('animalid')  } );
         });
 
       });

@@ -1,3 +1,5 @@
+const util = require('util');
+
 var fs = require('fs');
 var logger = require('./logger.js');
 var moment = require('moment');
@@ -10,9 +12,20 @@ const eventModel = require('../models/Event.js');
 
 exports.eventModel = eventModel; 
 
-exports.findLast = (animalId) => {
+exports.findLastOne = (animalId) => {
     return eventModel.findOne({ "animalId" : animalId } ).sort({'timestamp':-1});
 };
+
+exports.findLast = (animalId,timestamp,amount) => {
+    amount = amount || 10
+    return eventModel.find({ "animalId" : animalId , 'timestamp' : { '$lt' : timestamp } } ).limit(amount).sort({'timestamp':-1});
+};
+
+exports.find = (animalId,start,end,options) => {
+    var events = eventModel.find({ 'animalId' : animalId , timestamp : { '$gte' : new Date(start), '$lte' : new Date(end)} }).sort({'timestamp':-1});
+    return events;
+};
+
 
 exports.findClosest = (animalId,time) => {
     
@@ -48,21 +61,37 @@ exports.findClosest = (animalId,time) => {
 
 };
 
-exports.find = (animalId,start,end,options) => {
-    var events = eventModel.find({ 'animalId' : animalId , timestamp : { '$gte' : new Date(start), '$lte' : new Date(end)} }).sort({'timestamp':-1});
-    return events;
-};
-
 
 exports.geoJsonPoints = (events) => {
 
-  console.log('first for jsonify',events[0]);
+  // console.log('first for jsonify',events[0]);
   var points = events.map((event)=> {
       return turf.point([event.long , event.lat]);
     }
   );
   var collection = turf.featureCollection(points);
+  // console.log(util.inspect(collection, false, 10))
+
   return collection;
+
+};
+
+exports.geoJsonLineString = (events) => {
+
+  var points = events.map((event)=> {
+      return [event.long , event.lat];
+    }
+  );
+
+  var properties = { 
+    "stroke-width": 5,
+    "stroke" : "#FF0000"
+  };
+
+  var ls = turf.lineString( points , properties );
+
+  return ls;
+
 
 };
 

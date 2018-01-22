@@ -23,7 +23,7 @@ exports.index = (req, res) => {
   }
   
   res.render('mailpreview', {
-         body: mail.generateOptInMailMarkup(data)
+    body: mail.generateOptInMailMarkup(data)
   });
 
 };

@@ -62,6 +62,14 @@ app.get('/user/unsubscribe/:hash',userController.unsubscribe);
 
 // Websockets
 io.on('connection', function (socket) {
+
+  socket.on('activateIndividual', function (animal) {
+    individualController.setIndividualStatus(true,animal.id,socket);
+  });
+
+  socket.on('deactivateIndividual', function (animal) {
+    individualController.setIndividualStatus(false,animal.id,socket);
+  });
   
   socket.on('getMapData', function (reqData) {
     individualController.getMapData(reqData,socket);
