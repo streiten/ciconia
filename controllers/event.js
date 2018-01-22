@@ -18,7 +18,7 @@ exports.findLastOne = (animalId) => {
 
 exports.findLast = (animalId,timestamp,amount) => {
     amount = amount || 10
-    return eventModel.find({ "animalId" : animalId , 'timestamp' : { '$lt' : timestamp } } ).limit(amount).sort({'timestamp':-1});
+    return eventModel.find({ "animalId" : animalId , 'timestamp' : { '$lte' : timestamp } } ).limit(amount).sort({'timestamp':-1});
 };
 
 exports.find = (animalId,start,end,options) => {
