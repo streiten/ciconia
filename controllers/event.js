@@ -64,11 +64,21 @@ exports.findClosest = (animalId,time) => {
 
 exports.geoJsonPoints = (events) => {
 
-  // console.log('first for jsonify',events[0]);
   var points = events.map((event)=> {
-      return turf.point([event.long , event.lat]);
+      
+      var properties = {};
+      properties.timestamp = event.timestamp;
+      properties.animalId = event.animalId;
+      properties.hasStoryData = event.hasStoryData;
+      properties.lat = event.lat;
+      properties.long = event.long;
+      Object.assign(properties,event.meta); 
+
+      return turf.point([event.long , event.lat],properties);
+
     }
   );
+
   var collection = turf.featureCollection(points);
   // console.log(util.inspect(collection, false, 10))
 
@@ -84,14 +94,12 @@ exports.geoJsonLineString = (events) => {
   );
 
   var properties = { 
-    "stroke-width": 5,
-    "stroke" : "#FF0000"
+    "stroke" : "#0F0",
+    "stroke-width": 3,
   };
 
   var ls = turf.lineString( points , properties );
-
   return ls;
-
 
 };
 
