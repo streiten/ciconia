@@ -77,7 +77,7 @@ exports.getMapData = (reqData,socket) => {
       reqData.end = animal.featureDateEnd;
     }
 
-    eventController.find(animal.id,reqData.start,reqData.end).then( events => {
+    eventController.findFromTo(animal.id,reqData.start,reqData.end).then( events => {
       // console.log('Events found:',events.length);
       socket.emit('mapData',eventController.geoJsonPoints(events));
     });

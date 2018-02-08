@@ -1,89 +1,34 @@
+process.on('unhandledRejection', (reason, p) => {
+  console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
+  // application specific logging, throwing an error, or other logic here
+});
+
+
 var winston = require('winston');
 var winston = require('winston');
 var moment = require('moment');
 
 const animalModel = require('./models/Animal.js');
-const eventModel = require('./models/Event.js');
+const eventController = require('./controllers/Event.js');
 
 function fetchEvents() {
   winston.level = 'debug';
   winston.log('info', moment().format() + ' - One event by day ?');
 
-  var s = moment().subtract(30,'days');
-  var targetTime = 16 * 3600; 
+  var s = moment();
 
-  animalModel.find({ "active": true } ).limit(1).then( animals => { 
-    
+  animalModel.find({ "active": true } ).then( animals => { 
     animals.forEach( animal => {
-
-
-      // find events closest to provided moments time for the last n days
-      // utilizting aggregation: group events by dayOfYear, sort absolute distance in seconds to time provided
-      // return closest event for each day
-
-      var aggregateParams = [
-        {
-          $match : {
-            'animalId' : animal.id,
-            'timestamp' : { $gt : new Date(s) }
-          }
-        },
-        {
-          $addFields : {
-              differenceToQueriedTime : {
-                  $abs : {
-                      $subtract : [
-                        targetTime, 
-                        { $add : [
-                            { $multiply : [ { $hour : '$timestamp'} , 3600 ] },
-                            { $multiply : [ { $minute : '$timestamp'} , 60 ] },
-                            { $second : '$timestamp'}
-                          ]
-                        }
-                      ]
-                    }
-              }
-          },
-        },
-        {
-          $sort : {differenceToQueriedTime : 1}
-        },
-        {
-          $group : {
-            
-            _id: { $dateToString: { format: "%Y-%m-%d", date: "$timestamp" }
-            },
-            events: { $push :  "$$ROOT" }
-            
-            }
-        },
-        { "$project": { 
-                "date": "$_id",
-                "event": { "$slice": [ "$events", 1 ] },
-                '_id' : 0
-          }
-        },
-        {
-          $sort : { 'date' : -1}
-        }
-      ];
-
-      var resultPromise = eventModel.aggregate(aggregateParams).then(events => {
-        
-        // remove 
-        var events = events.map( item => {
-          return item.event[0];
+      
+      eventController.findOnePerDay(animal.id,s,10).then(events => {
+        events.forEach(event => {
+          console.log(event.timestamp);
         });
-
-        console.log(events); 
-        return events;
 
       });
 
-
     });
   });
-
 }
 
 fetchEvents();
