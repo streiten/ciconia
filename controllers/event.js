@@ -135,7 +135,6 @@ exports.findOnePerDay = (animalId,to,n) => {
         
         // remove ????  
         events = events.map( item => {
-          console.log(item.event[0].timestamp);
           return item.event[0];
         });
 
