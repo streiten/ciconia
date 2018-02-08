@@ -74,7 +74,7 @@ exports.findOnePerDay = (animalId,to,n) => {
       
       var from = to.clone().subtract(n,'days');
 
-      console.log('finding on per day from ', from , 'until ',to);
+      // console.log('finding on per day from ', from , 'until ',to);
 
       var mmtMidnight = to.clone().startOf('day');
 
