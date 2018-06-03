@@ -16,12 +16,12 @@ exports.findLastOne = (animalId) => {
     return eventModel.findOne({ "animalId" : animalId } ).sort({'timestamp':-1});
 };
 
-exports.findLast = (animalId,timestamp,amount) => {
+exports.findLastN = (animalId,timestamp,amount) => {
     amount = amount || 10
     return eventModel.find({ "animalId" : animalId , 'timestamp' : { '$lte' : timestamp } } ).limit(amount).sort({'timestamp':-1});
 };
 
-exports.find = (animalId,start,end,options) => {
+exports.findFromTo = (animalId,start,end,options) => {
     var events = eventModel.find({ 'animalId' : animalId , timestamp : { '$gte' : new Date(start), '$lte' : new Date(end)} }).sort({'timestamp':-1});
     return events;
 };
@@ -61,6 +61,90 @@ exports.findClosest = (animalId,time) => {
 
 };
 
+/**
+ * find one event per day from start n days backwards, closest to time of of day of start ts
+ * 
+ * @param  {int} movebank animal ID
+ * @param  {moment obj} events upto this moment
+ * @param  {int} days backwards from start
+ * @return {promise} resolving mongo aggregation query
+ */ 
+
+exports.findOnePerDay = (animalId,to,n) => {
+      
+      var from = to.clone().subtract(n,'days');
+
+      // console.log('finding on per day from ', from , 'until ',to);
+
+      var mmtMidnight = to.clone().startOf('day');
+
+      // Difference in minutes
+      var targetTime = to.diff(mmtMidnight, 'seconds');
+      
+      // utilizting aggregation: group events by dayOfYear, sort absolute distance in seconds to time provided
+      // return closest event for each day
+
+      var aggregateParams = [
+        {
+          $match : {
+            'animalId' : animalId,
+            'timestamp' : { $gte : new Date(from) , $lte : new Date(to) }
+          }
+        },
+        {
+          $addFields : {
+              differenceToQueriedTime : {
+                  $abs : {
+                      $subtract : [
+                        targetTime, 
+                        { $add : [
+                            { $multiply : [ { $hour : '$timestamp'} , 3600 ] },
+                            { $multiply : [ { $minute : '$timestamp'} , 60 ] },
+                            { $second : '$timestamp'}
+                          ]
+                        }
+                      ]
+                    }
+              }
+          },
+        },
+        {
+          $sort : {differenceToQueriedTime : 1}
+        },
+        {
+          $group : {
+            
+            _id: { $dateToString: { format: "%Y-%m-%d", date: "$timestamp" }
+            },
+            events: { $push :  "$$ROOT" }
+            
+            }
+        },
+        { "$project": { 
+                "date": "$_id",
+                "event": { "$slice": [ "$events", 1 ] },
+                '_id' : 0
+          }
+        },
+        {
+          $sort : { 'date' : -1}
+        }
+      ];
+
+      var resultPromise = eventModel.aggregate(aggregateParams).then(events => {
+        
+        // remove ????  
+        events = events.map( item => {
+          return item.event[0];
+        });
+
+        return events;
+      });
+
+      return resultPromise;
+
+};
+
 
 exports.geoJsonPoints = (events) => {
 
@@ -94,13 +178,23 @@ exports.geoJsonLineString = (events) => {
   );
 
   var properties = { 
-    "stroke" : "#0F0",
-    "stroke-width": 3,
+    "stroke" : "#000",
+    "stroke-width": 2,
   };
 
   var ls = turf.lineString( points , properties );
   return ls;
 
+};
+
+exports.geoJsonSmoothy = (lineString) => {
+  var res =  turf.bezier(lineString,1000,0.75);
+  return res;
+};
+
+exports.geoJsonSimply = (lineString) => {
+  var res = turf.simplify(lineString,0.25,true);
+  return res;
 };
 
 

@@ -354,8 +354,8 @@ const fetchViewData = function(lat,long) {
 
 const fetchLocationData = function(event) {
   
-  // getting the previous 10 events
-  return eventController.findLast(event.animalId,event.timestamp,10).then( events => {
+  // getting events for last 10 days
+  return eventController.findOnePerDay(event.animalId,moment(event.timestamp),6).then( events => {
     
     // handle if its just one event... line string no woking...
     // just double it for now
@@ -369,6 +369,9 @@ const fetchLocationData = function(event) {
     // var eventsFeatureCollectionPoints = eventController.geoJsonPoints(events);
     var eventsFeatureLineString = eventController.geoJsonLineString(events);
     
+    eventsFeatureLineString = eventController.geoJsonSimply(eventsFeatureLineString);
+    eventsFeatureLineString = eventController.geoJsonSmoothy(eventsFeatureLineString);
+
     var encGeoJson = encodeURIComponent(JSON.stringify(eventsFeatureLineString));
      
     var mbc = new MapboxClient(APPconfig.mapbox.accesstoken);
@@ -382,7 +385,7 @@ const fetchLocationData = function(event) {
     var imageUrl = mbc.getStaticURL('streitenorg', APPconfig.mapbox.locationmapstyle, 1280, 720, {
       longitude: event.long,
       latitude: event.lat,
-      zoom: 8,
+      zoom: 6,
     }, options
     );
 
@@ -392,8 +395,6 @@ const fetchLocationData = function(event) {
     // inject custom marker part, missing in npm mapbox module
     var replaceString = 'geojson('+ encGeoJson +'),url-' + encodedIconURL + '(' + event.long + ',' + event.lat + ')';
     imageUrl = imageUrl.replace('geojson([])',replaceString);
-
-    // console.log(imageUrl);
 
     return { 'key' : 'location' , 'data' : { "imgurl" : imageUrl } } ;
 
