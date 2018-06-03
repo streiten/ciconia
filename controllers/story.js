@@ -364,13 +364,15 @@ const fetchLocationData = function(event) {
       console.log('uh,oh just one event?');
     }
 
-    console.log(events.length);
-
     // var eventsFeatureCollectionPoints = eventController.geoJsonPoints(events);
     var eventsFeatureLineString = eventController.geoJsonLineString(events);
-    
+    console.log('ls',eventsFeatureLineString);
+
     eventsFeatureLineString = eventController.geoJsonSimply(eventsFeatureLineString);
+    console.log('simply',eventsFeatureLineString);
+
     eventsFeatureLineString = eventController.geoJsonSmoothy(eventsFeatureLineString);
+    console.log('smooth',eventsFeatureLineString);
 
     var encGeoJson = encodeURIComponent(JSON.stringify(eventsFeatureLineString));
      

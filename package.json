@@ -11,7 +11,7 @@
     "feather-icons": "^3.2.2",
     "geonames.js": "^1.0.3",
     "later": "^1.2.0",
-    "mapbox": "^1.0.0-beta7",
+    "mapbox": "github:streiten/mapbox-sdk-js",
     "mjml": "^3.3.5",
     "mongoose": "^4.13.4",
     "mustache": "^2.3.0",

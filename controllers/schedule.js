@@ -26,6 +26,8 @@ exports.init = () => {
     
     var eventUpdateSchedule = later.parse.text('every 2 hour');
     later.setInterval(eventController.updateEvents,eventUpdateSchedule); 
+    
+    eventController.updateEvents();
 
     // message que
     // var mqSchedule = later.parse.text('every 2 min');
@@ -33,7 +35,7 @@ exports.init = () => {
 
     // fetch stories que
     var fsSchedule = later.parse.text('every 2 min');
-    later.setInterval(fsHandler,fsSchedule); 
+    // later.setInterval(fsHandler,fsSchedule); 
 
     if(APPconfig.sim.active) {
       // mqHandler();
