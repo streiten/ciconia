@@ -357,6 +357,15 @@ const fetchLocationData = function(event) {
   // getting the previous 10 events
   return eventController.findLast(event.animalId,event.timestamp,10).then( events => {
     
+    // handle if its just one event... line string no woking...
+    // just double it for now
+    if(events.length == 1) {
+      events.push(events[0]);
+      console.log('uh,oh just one event?');
+    }
+
+    console.log(events.length);
+
     // var eventsFeatureCollectionPoints = eventController.geoJsonPoints(events);
     var eventsFeatureLineString = eventController.geoJsonLineString(events);
     
