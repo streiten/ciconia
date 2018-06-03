@@ -12,6 +12,7 @@ var animalSchema = new Schema({
   studyId: Number,
   name: String,
   active: Boolean,
+  lastEventAt: Date,
   featureDateStart: Date,
   featureDateEnd: Date,
   featureRange: Number,

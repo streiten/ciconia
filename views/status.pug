@@ -13,11 +13,11 @@ block content
             th Name
             th Start
             th End
-            th Last Event
+            th Last Movebank Event
             th Action
           
           for individual in individuals
-            if individual.active
+            if individual.active 
               tr
                 td= individual.id
                 td= individual.name
@@ -41,7 +41,7 @@ block content
           tr
             th Id
             th Name
-            th Last Update
+            th Last Movebank Event
             th Action
           
           for individual in individuals
