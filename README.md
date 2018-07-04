@@ -1,6 +1,6 @@
 # Ciconia
-Expirience bird migration!  
-Track a bird with an daily email while on its journey.
+Experience bird migration!  
+Track a bird with a daily email while on its journey.
 
 ### Features
 * Syncing real-time data from movebank.org studies to local database
