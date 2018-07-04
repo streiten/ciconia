@@ -1,22 +1,6 @@
-extends layout
-
+extends layout_front
 block content
-  h1 Thanks.
-  p.lead= msg
-
-  script.
-    $(document).ready(function() {
-      
-      //- var socket = io.connect();
-
-      //- $('form').on('submit',function(e){
-      //-   e.preventDefault();
-      //-   socket.emit('createUser',$(this).serialize());
-      //- });
-
-      //- socket.on('createUserResult', data => {
-      //-   $('#msg').html(data.msg);
-      //- });    
-    
-    });
-        
+  .row.col-sm-4.col-sm-offset-4
+    i(data-feather="feather")
+    h1 Thanks!
+    p.lead= msg

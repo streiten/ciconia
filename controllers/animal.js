@@ -23,8 +23,8 @@ exports.index = (req, res) => {
 
   animal.findOne( { 'id': req.params.id }).then(animal => {
 
-  res.render('individual', {
-    title: 'Individual ' + animal.id + ': ' + animal.name ,
+  res.render('animal', {
+    title: 'Animal ' + animal.id + ': ' + animal.name ,
     ids:  JSON.stringify({ id : animal.id, sid : animal.studyId }),
     featureRange: animal.featureRange
   });

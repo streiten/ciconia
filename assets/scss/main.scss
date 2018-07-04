@@ -1,13 +1,11 @@
 @import url('https://rsms.me/inter/inter-ui.css');
 
-
-@import "themes/default/variables";
+// @import "themes/default/variables";
 
 @import "lib/bootstrap/bootstrap";
 @import "lib/font-awesome/font-awesome";
 
-
-@import "themes/default/default";
+// @import "themes/default/default";
 
 // Scaffolding
 // -------------------------
@@ -89,3 +87,25 @@ iframe {
   height: 100vh;
   border: 0;
 }
+
+.front {
+  
+  .container {
+    text-align: center;
+  }
+
+  .feather {
+    margin-right: 0;
+  }
+  
+  .feather.feather-feather {
+    transform: translate(50%);
+    width: 128px;
+    height: 128px;
+  }
+
+  input {
+    width: 100%;
+  }
+}
+

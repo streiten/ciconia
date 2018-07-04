@@ -3,8 +3,7 @@ extends layout
 block content
   .row
     .col-sx-12
-      h1 Status
-      h2 Individuals
+      h1 Animals
       if individuals
         h3 Active
         table.table.table-striped.table-hover
@@ -30,9 +29,9 @@ block content
                    | 
                    i.fa.fa-refresh
                 td
-                  a(href='/individual/' + individual.id ) View Details <br>
-                  a(href='/story/' + individual.id + '/latest' ).generate-content View story <br>
-                  a(href='/story/' + individual.id data-animalid=individual.id ).setIndividualStatus-deactivate Deactivate <br>
+                  a(href='/admin/animal/' + individual.id ) View Details <br>
+                  a(href='/admin/story/' + individual.id + '/latest' ).generate-content View story <br>
+                  a(href='/admin/story/' + individual.id data-animalid=individual.id ).setIndividualStatus-deactivate Deactivate <br>
 
                   //- a(href='#' data-animalid=individual.id).update-story-data Update story data <br>
 
@@ -56,9 +55,9 @@ block content
                    | 
                    i.fa.fa-refresh                
                 td
-                  a(href='/individual/' + individual.id ) View Details <br>
-                  a(href='/story/' + individual.id  + '/latest' ).generate-content View story <br>
-                  a(href='/story/' + individual.id data-animalid=individual.id ).setIndividualStatus-activate Activate <br>
+                  a(href='/admin/animal/' + individual.id ) View Details <br>
+                  a(href='/admin/story/' + individual.id  + '/latest' ).generate-content View story <br>
+                  a(href='/admin/story/' + individual.id data-animalid=individual.id ).setIndividualStatus-activate Activate <br>
 
     
     script.
@@ -72,7 +71,7 @@ block content
         });
 
         socket.on('individualStatus', data => {
-          window.location.href = '/status';
+          window.location.href = '/animals';
         });
 
         $('.update-story-data').on('click',function(e){

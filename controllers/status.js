@@ -30,8 +30,8 @@ exports.index = (req, res) => {
 
     });
 
-   res.render('status', {
-     title: 'Status',
+   res.render('animals', {
+     title: 'Animals',
      individuals: mapped
    });
   

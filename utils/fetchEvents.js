@@ -1,8 +1,8 @@
 var winston = require('winston');
 var moment = require('moment');
 
-const animalModel = require('./models/Animal.js');
-const eventController = require('./controllers/event.js');
+const animalModel = require('../models/Animal.js');
+const eventController = require('../controllers/event.js');
 
 function fetchEvents() {
   winston.level = 'debug';

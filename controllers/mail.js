@@ -197,5 +197,24 @@ exports.sendSimStory = () => {
 
 };
 
+
+/**
+ * GET
+ * Preview optin page.
+ */
+ 
+exports.previewOptIn = (req, res) => {
+
+  var data = {
+    "animal" : { "name" : "AnimalName" },
+    "hash" : '[hash]'
+  }
+  
+  res.render('mailpreview', {
+    body: exports.generateOptInMailMarkup(data)
+  });
+};
+
+
     
 

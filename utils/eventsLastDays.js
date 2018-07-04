@@ -8,8 +8,8 @@ var winston = require('winston');
 var winston = require('winston');
 var moment = require('moment');
 
-const animalModel = require('./models/Animal.js');
-const eventController = require('./controllers/Event.js');
+const animalModel = require('../models/Animal.js');
+const eventController = require('../controllers/Event.js');
 
 function fetchEvents() {
   winston.level = 'debug';
