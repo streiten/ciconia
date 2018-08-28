@@ -1,13 +1,14 @@
 <mj-section padding-top="30px">
   <mj-column width="100%">
     <mj-text >
-      <p>Hi, it's me <strong>{{ animal.name }}</strong>.</p>
+      <p>Hi there!</p>
+      <p>I am a {{ animal.type }} and you can find out more about me <a class="link-style" href="{{ animal.profileUrl }}">here</a>.</p>
       <p>
-         You can be my designated travel partner for my next migration. But for this adventure to take place <strong>I need you to click on this unnatural button</strong> so i know for sure you want to hear from me every couple of days.Dont't worry, we can seperate at anytime (humans call it unsubscribe).
+         You can be my designated travel partner for my next migration. But for this adventure to happen <strong>I need you to click on this Yes! button</strong> so i know for sure you want to hear from me every day. Dont't worry, we can seperate at anytime (humans call it unsubscribe).
       </p>
     </mj-text>
-    <mj-button href="http://localhost:8888/user/confirm/{{ hash }}">
-      Yes, please take me on that journey!
+    <mj-button href="{{ confirmUrl }}">
+      Yes!
     </mj-button>
     <mj-text >
       <p>

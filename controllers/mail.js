@@ -61,8 +61,8 @@ exports.sendOptIn = (user) => {
 
         // assigned animal
         var data = {
-          "animal" : { "name" : "Kerk" },
-          "hash" : user.hash
+          "animal" : { "name" : "Animal Name" },
+          "confirmUrl" : APPconfig.baseurl + '/confirm/' + user.hash
         };
 
         var htmlbody = exports.generateOptInMailMarkup(data);
@@ -73,13 +73,16 @@ exports.sendOptIn = (user) => {
 
 exports.generateOptInMailMarkup = ( data ) => {
 
-        var tpl = fs.readFileSync('./views/mail/optIn.mjml', 'utf8');
-        markup = mustache.render(tpl, data);
-        
         var wraptpl = fs.readFileSync('./views/mail/template.mjml', 'utf8');
-        view = { 'body' : markup };
-        mjmlmail = mustache.render(wraptpl, view);
+        var tpl = fs.readFileSync('./views/mail/optIn.mjml', 'utf8');
 
+        // render template into wrap 
+        markup = mustache.render(wraptpl, { 'body' : tpl });
+      
+        // render data into template
+        mjmlmail = mustache.render(markup, data);
+
+        // convert to HTML E-Mail
         try {
           const { html, errors } = mjml.mjml2html(mjmlmail, { beautify: true, minify: false, level: "soft" });
 
@@ -206,9 +209,13 @@ exports.sendSimStory = () => {
 exports.previewOptIn = (req, res) => {
 
   var data = {
-    "animal" : { "name" : "AnimalName" },
-    "hash" : '[hash]'
-  }
+    "animal" : { 
+      "name" : "Kirk",
+      "type" : "Krane",
+      "profileUrl" : APPconfig.baseurl + 'profile/animal' 
+    },
+    "confirmUrl" : APPconfig.baseurl + 'confirm/[user.hash]'
+  };
   
   res.render('mailpreview', {
     body: exports.generateOptInMailMarkup(data)

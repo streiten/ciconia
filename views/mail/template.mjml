@@ -5,11 +5,29 @@
     <mj-font name="Roboto" href="https://fonts.googleapis.com/css?family=Roboto:300,500" />
 
     <mj-attributes>
+      
       <mj-all font-family="Roboto, Helvetica, sans-serif" />
       <mj-text padding="0" font-weight="300" font-size="28px" line-height="32px" color="#616161" />
+      <mj-button padding="50" font-weight="300" font-size="28px" line-height="32px" color="#FFF" />
       <mj-section padding="0" />
       <mj-image padding="0" />
     </mj-attributes>
+
+    <mj-style inline="inline">
+      
+      .link-style {
+        color: #616161;
+        text-decoration: none;
+        border-bottom: 2px solid;
+      }
+
+      .link-nostyle {
+        color: #616161;
+        text-decoration: none;
+      }
+
+    </mj-style>
+
   </mj-head>
 
   <mj-body>
@@ -21,13 +39,14 @@
         </mj-column>
         <mj-column width="97%">
           <mj-text font-size="16px" line-height="24px">
-            <a href="https://bird.institute" style="color: #000;">CICONIA</a> 
+            <a href="https://bird.institute" class="link-nostyle">CICONIA</a> 
           </mj-text>
         </mj-column>
       </mj-section>
 
-      {{{body}}}
+      {{{ body }}}
 
+      {{=<% %>=}}{{#unsubscribe }}<%={{ }}=%>
       <mj-section padding="20px 0">
         <mj-column width="100%">
           <mj-text align="left" font-size="10px" line-height="24px">
@@ -35,6 +54,7 @@
           </mj-text>
         </mj-column>
       </mj-section>
+      {{=<% %>=}}{{/unsubscribe }}<%={{ }}=%>
 
     </mj-container>
   </mj-body>

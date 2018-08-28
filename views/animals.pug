@@ -13,7 +13,7 @@ block content
             th Start
             th End
             th Last Movebank Event
-            th Action
+            th Actions
           
           for individual in individuals
             if individual.active 
@@ -29,9 +29,17 @@ block content
                    | 
                    i.fa.fa-refresh
                 td
-                  a(href='/admin/animal/' + individual.id ) View Details <br>
-                  a(href='/admin/story/' + individual.id + '/latest' ).generate-content View story <br>
-                  a(href='/admin/story/' + individual.id data-animalid=individual.id ).setIndividualStatus-deactivate Deactivate <br>
+                  a(href='/admin/animal/' + individual.id , class="fafa-map")
+                    |
+                    i.fa.fa-map
+                  
+                  a(href='/admin/story/' + individual.id + '/latest' ).generate-content
+                    |
+                    i.fa.fa-file
+
+                  a(href='/admin/story/' + individual.id data-animalid=individual.id ).setIndividualStatus-deactivate
+                    |
+                    i.fa.fa-times
 
                   //- a(href='#' data-animalid=individual.id).update-story-data Update story data <br>
 
@@ -41,7 +49,7 @@ block content
             th Id
             th Name
             th Last Movebank Event
-            th Action
+            th Actions
           
           for individual in individuals
             if !individual.active
@@ -51,13 +59,23 @@ block content
                 td
                   span.lastEventDate= individual.lastEventAt
                   | 
+                  
                   a(href='#' data-animalid=individual.id).update-lastEventAt 
                    | 
                    i.fa.fa-refresh                
+                
                 td
-                  a(href='/admin/animal/' + individual.id ) View Details <br>
-                  a(href='/admin/story/' + individual.id  + '/latest' ).generate-content View story <br>
-                  a(href='/admin/story/' + individual.id data-animalid=individual.id ).setIndividualStatus-activate Activate <br>
+                  a(href='/admin/animal/' + individual.id )
+                    |
+                    i.fa.fa-map
+                  
+                  a(href='/admin/story/' + individual.id  + '/latest' ).generate-content
+                    |
+                    i.fa.fa-file
+                  
+                  a(href='/admin/story/' + individual.id data-animalid=individual.id ).setIndividualStatus-activate
+                    |
+                    i.fa.fa-check
 
     
     script.

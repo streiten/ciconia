@@ -70,8 +70,11 @@ app.get('/admin',statusController.index);
 app.get('/admin/animals',statusController.index);
 app.get('/admin/studies',studiesController.index);
 app.get('/admin/studies/:id',studiesController.studyDetail);
+
+app.get('/admin/story/:id/:day/:sections',storyController.index);
 app.get('/admin/story/:id/:day',storyController.index);
-app.get('/admin/story/:id/',storyController.index);
+// app.get('/admin/story/:id/',storyController.index);
+
 app.get('/admin/animal/:id',animalController.index);
 app.get('/admin/users/',usersController.index);
 
@@ -122,8 +125,19 @@ http.listen(httpport, function(){
 });
 
 function Ciconia() {
-  winston.level = 'debug';
-  winston.log('info', moment().format() + ' - Ciconia started...');
+  
+  winston.log('info', moment().format() + ' - CICONIA started...');
+
+  if(process.env.NODE_ENV == "production") {
+      winston.log('info','Production Environment');
+      scheduleController.init();
+  } else {
+
+   winston.level = 'debug';
+   winston.log('info','Development Environment');
+   winston.log('info','- not setting up data sync and mail schedule');
+  }
+
 }
 
 new Ciconia();

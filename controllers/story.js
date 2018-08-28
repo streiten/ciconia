@@ -31,6 +31,13 @@ const APPconfig = JSON.parse(fs.readFileSync('./config.json', 'utf8'));
 
 exports.index = (req, res) => {
   
+  var sections = '';
+  if(typeof(req.params.sections) != 'undefined') {
+    sections = req.params.sections;
+    sections = sections.split('|');
+  } else {
+    sections = ['all'];
+  }
 
   animal.findOne({ 'id': req.params.id }).then(animal => {
 
@@ -38,14 +45,13 @@ exports.index = (req, res) => {
     var date = moment(animal.featureDateStart);
 
     var dayoffset = 0;
-    // day offset ? -> clac the event to display
 
+    // day offset ? -> clac the event to display, refactor: no route without day anymore
     if(req.params.day) {
-      
       dayoffset = req.params.day;
-
       if( dayoffset == 'latest' ) {
         date = moment();
+        dayoffset = 0;
       } else {
         date.add(dayoffset,'day');
       }
@@ -56,18 +62,28 @@ exports.index = (req, res) => {
         // update story data
         exports.fetchStoryDataForEvent(closestEvent,true).then( () => {
         
-        exports.generateStoryMarkup(closestEvent, animal).then( htmlbody => {
+          exports.generateStoryMarkup(closestEvent, animal, sections).then( htmlbody => {
+            
+            view = { 'username' : 'Debugger' };
+            htmlbody = mustache.render(htmlbody, view);
 
-        view = { 'username' : 'Debugger' };
-        htmlbody = mustache.render(htmlbody, view);
+            // generarte next/prev links
+            
+            var prevStoryUrl = '/admin/story/' + animal.id + '/' + (dayoffset*1-1);
+            var nextStoryUrl = '/admin/story/' + animal.id + '/' + (dayoffset*1+1);
 
-         res.render('story', {
-            'body': htmlbody,
-            'state': date.format('ll') + ' - Event: ' + moment(closestEvent.timestamp).format('llll') + '_id: ' + closestEvent._id ,
-            'prevStoryUrl' : '/story/' + animal.id + '/' + (dayoffset*1-1) ,
-            'nextStoryUrl' : '/story/' + animal.id + '/' + (dayoffset*1+1) 
+            if(dayoffset <= 1) {
+              var prevStoryUrl = '/admin/story/' + animal.id + '/latest';
+            } 
+
+            res.render('story', {
+              'body': htmlbody,
+              'state': date.format('ll') + ' - Event: ' + moment(closestEvent.timestamp).format('llll') + '_id: ' + closestEvent._id ,
+              'prevStoryUrl' : prevStoryUrl ,
+              'nextStoryUrl' : nextStoryUrl 
+            });
+
           });
-        });
       });
 
     });
@@ -76,17 +92,18 @@ exports.index = (req, res) => {
 
 };
 
-
-exports.generateStoryMarkup = ( event , animal ,username ) => {
+exports.generateStoryMarkup = ( event , animal , sections , username ) => {
   
+
   // get storyData for event, then prepare view data
   return storyData.findOne( { "eventId" : event._id } ).then( result => {
     
+    // if there is storydata in local DB, else fetch that first
     if(result) {
-      return compileStoryDataMarkup(result.data,animal,username);
+      return compileStoryDataMarkup(result.data,animal,sections,username);
     } else {
       return exports.fetchStoryDataForEvent(event).then( ( result ) => {
-        return compileStoryDataMarkup(result.data,animal,username);
+        return compileStoryDataMarkup(result.data,animal,sections,username);
       });
     }
 
@@ -94,66 +111,58 @@ exports.generateStoryMarkup = ( event , animal ,username ) => {
 
 };
 
-const compileStoryDataMarkup = ( storyData,animal ) => {
+const compileStoryDataMarkup = ( storyData,animal,sections ) => {
 
    var storyData = parseJson(storyData);
-
+   
    // convert to object ?? needed ?
    var storyDataObj = {};
+
    storyData.forEach( item => {
      storyDataObj[item['key']] = item['data'] ;
    });
-
 
    var markup = '';
    var introview = {};
 
    introview.individual = animal.name;
+ 
 
-   if(storyDataObj['weather']) {
-     introview.temperature = storyDataObj['weather'].weatherObservation.temperature;
-     introview.wind = storyDataObj['weather'].weatherObservation.windSpeed;
-     introview.weather = storyDataObj['weather'].weatherObservation.clouds;
-   }
+    // needs to be abstracted, and seperated
 
-   // distance ... last spoke ? start of migration ?
-   if(storyDataObj['stat']) {
-     introview.elevation = storyDataObj['stat'].elevation.srtm1;
-     introview.country = storyDataObj['stat'].country.countryName;
-   }
+       if(displaySection('weather',sections,storyDataObj)) {
+         introview.temperature = storyDataObj['weather'].weatherObservation.temperature;
+         introview.wind = storyDataObj['weather'].weatherObservation.windSpeed;
+         introview.weather = storyDataObj['weather'].weatherObservation.clouds;
+       }
 
-   var viewtpl = fs.readFileSync('./views/mail/intro.mjml', 'utf8');
-   markup =  mustache.render(viewtpl, introview);
+       // distance ... last spoke ? start of migration ?
+       if(displaySection('stat',sections,storyDataObj)) {
+         introview.elevation = storyDataObj['stat'].elevation.srtm1;
+         introview.country = storyDataObj['stat'].country.countryName;
+       }
+        
+       var viewtpl = fs.readFileSync('./views/mail/intro.mjml', 'utf8');
+       markup =  mustache.render(viewtpl, introview);
+    
 
 
-   if(storyDataObj['view']) {
+   if(displaySection('view',sections,storyDataObj)) {
      markup += generateViewDataMarkup(storyDataObj['view']);
    }
 
-   if(storyDataObj['WHS'].length > 0) {
+   if(displaySection('WHS',sections,storyDataObj)) {
      markup += generateWHSDataMarkup(storyDataObj['WHS']);
    }
 
-   if(storyDataObj['wikipedia']) {
+   if(displaySection('wikipedia',sections,storyDataObj)) {
+    console.log('wikidata',storyDataObj['wikipedia']);
      markup += generateWikipediaDataMarkup(storyDataObj['wikipedia']);
    }
 
-   if(storyDataObj['location']) {
+   if(displaySection('location',sections,storyDataObj)) {
      markup += generateLocationDataMarkup(storyDataObj['location']);
    }
-
-   // Others - loop
-   // view = {
-   //   individuals : [
-   //   {
-   //     name: 'Joe',
-   //     country: 'Belarus',
-   //   },
-   //   {
-   //     name: 'Sepp',
-   //     country: 'Bavaria',
-   //   }
-   // ]};
 
    view = { 'individual' : animal.name };
 
@@ -181,6 +190,18 @@ const compileStoryDataMarkup = ( storyData,animal ) => {
        }
    }
 };
+
+const displaySection = (sectionInQuestion,sectionsToDisplay,storyDataObj) => {
+
+  // check if sections should be displayed
+  if((sectionsToDisplay.indexOf(sectionInQuestion) > -1 ) || (sectionsToDisplay[0] == 'all')) {
+    // check if there's data for the section
+    if(storyDataObj[sectionInQuestion]) {
+      return true;
+    }
+  }
+  return false;
+}
 
 const generateViewDataMarkup = ( itemData ) => {
         
@@ -228,7 +249,6 @@ const generateWHSDataMarkup = ( itemData ) => {
 const generateWikipediaDataMarkup = ( itemData ) => {
     
     var view = { wikis : []};
-
     // { summary: 'Alemdar, aka Gazi Alemdar, was a former Turkish salvage tug, which is best known for her victorious engagement with a French navy warship during the Turkish War of Independence. Built in 1898 in Denmark, the Danish-flagged vessel was seized by the Ottoman Empire during World War I (...)',
     //        elevation: 5,
     //        lng: 31.41616,
@@ -358,6 +378,7 @@ const fetchLocationData = function(event) {
   return eventController.findOnePerDay(event.animalId,moment(event.timestamp),6).then( events => {
     
     // handle if its just one event... line string no woking...
+    // 
     // just double it for now
     if(events.length == 1) {
       events.push(events[0]);
@@ -366,13 +387,13 @@ const fetchLocationData = function(event) {
 
     // var eventsFeatureCollectionPoints = eventController.geoJsonPoints(events);
     var eventsFeatureLineString = eventController.geoJsonLineString(events);
-    console.log('ls',eventsFeatureLineString);
+    //console.log('ls',eventsFeatureLineString);
 
     eventsFeatureLineString = eventController.geoJsonSimply(eventsFeatureLineString);
-    console.log('simply',eventsFeatureLineString);
+    //console.log('simply',eventsFeatureLineString);
 
     eventsFeatureLineString = eventController.geoJsonSmoothy(eventsFeatureLineString);
-    console.log('smooth',eventsFeatureLineString);
+    //console.log('smooth',eventsFeatureLineString);
 
     var encGeoJson = encodeURIComponent(JSON.stringify(eventsFeatureLineString));
      

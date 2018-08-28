@@ -3,10 +3,12 @@ extends layout
 block content
   .row
    .col-sm-2
-    a(href=prevStoryUrl class="btn btn-default fa fa-arrow-circle-o-left")
+      a(href=prevStoryUrl class="btn btn-default fa fa-arrow-circle-o-left")
+   
    .col-sm-8.text-center= state
+   
    .col-sm-2.text-right
-    a(href=nextStoryUrl class="btn btn-default fa fa-arrow-circle-o-right")
+      a(href=nextStoryUrl class="btn btn-default fa fa-arrow-circle-o-right")
 
   - var b = body
   iframe(srcdoc=b)
